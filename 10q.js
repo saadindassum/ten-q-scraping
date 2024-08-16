@@ -1,4 +1,4 @@
-import { ElementHandle } from 'puppeteer';
+import { ElementHandle, Page } from 'puppeteer';
 import { CategoryInfo } from './ten-q-objects.js';
 import ScheduleOfInvestments from './schedule-of-investments.js';
 import { InvestmentSummary } from './schedule-of-investments.js';
@@ -139,7 +139,8 @@ export default class TenQ {
 
     /**
      * Parses the TD elements in the row, and returns true if none of them have text.
-     * @param {ElementHandle} rowHandle 
+     * @param {ElementHandle} rowHandle
+     * @param {Page} page
      * @returns {boolean} Whether the row is empty or not
      */
     async rowBlank(rowHandle, page) {
@@ -173,14 +174,15 @@ export default class TenQ {
         let indices = new Array();
         let tdIndex = 0;
         for await (const tdHandle of tds) {
-            const spanHandle = tdHandle.$('div > span');
-            const str = '';
+            const spanHandle = await tdHandle.$('div > span');
+            let str = '';
             try {
                 str = await page.evaluate(
                     handle => handle.textContent,
                     spanHandle
                 );
-            } catch (e) {}
+            } catch (e) {
+            }
             if (str.length != 0) {
                 indices.push(tdIndex);
                 categories.push(str);
