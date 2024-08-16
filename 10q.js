@@ -1,15 +1,16 @@
 import { ElementHandle, Page } from 'puppeteer';
 import { CategoryInfo } from './ten-q-objects.js';
-import ScheduleOfInvestments from './schedule-of-investments.js';
+import { ScheduleOfInvestments } from './ten-q-objects.js';
 import { InvestmentSummary } from './schedule-of-investments.js';
 
-export default class TenQ {
+export default class TenQUtility {
     constructor() {}
 
     /**
      * 
      * @param {Browser} browser an open browser to use
      * @param {string} link a link to the filing page
+     * @returns {ScheduleOfInvestments[]} a list of a schedule of investments.
      */
     async parse10Q(browser, link) {
         const page = await browser.newPage();
@@ -25,12 +26,16 @@ export default class TenQ {
         const htmResults = await this.parseHtm(page);
         if (htmResults == null) {
             console.log('No tables found in document, so we parse manually.');
+        } else {
+            // console.log(htmResults);
         }
+        return htmResults;
     }
 
     /**
      * 
      * @param {Page} page the page we're parsing
+     * @returns {ScheduleOfInvestments[]} all the SOI's found in the page.
      */
     async parseHtm(page) {
         // This will get all our tables.
@@ -40,23 +45,27 @@ export default class TenQ {
             return null;
         }
         // console.log(`${tables.length} table(s) found. Adding all schedules`);
-        var tableIndex = 0;
+
+        let scheduleList = new Array();
+
         let tableInfo;
         for await (const tableHandle of tables) {
             tableInfo = await this.parseTable(tableHandle, page);
             if (tableInfo == null) {
                 continue;
+            } else {
+                // console.log(tableInfo.getTitle(), '\n');
+                scheduleList.push(tableInfo);
             }
         }
-        return 2;
+        return scheduleList;
     }
     
     /**
      * 
      * @param {ElementHandle} tableHandle
      * @param {Page} page
-     * @returns Map of the table with a title and a sub-map of investments,
-     * or null for irrelevant tables.
+     * @returns {ScheduleOfInvestments} or null.
      */
     async parseTable(tableHandle, page) {
         const rows = await tableHandle.$$('tr');
@@ -76,6 +85,9 @@ export default class TenQ {
         // for no apparent reason.
         let title = '';
         let i = 0;
+
+        let dateString = '';
+
         for (i; i < rowHandles.length; i++) {
             const tds = await rowHandles[i].$$('td');
             if (tds.length > 1) {
@@ -98,6 +110,9 @@ export default class TenQ {
                         if (str.length != 0) {
                             title += str;
                             title += '\n';
+                            // And this will make sure
+                            // the date is saved. Ish.
+                            dateString = str;
                         }
                     } catch (e) {
                         break;
@@ -111,9 +126,20 @@ export default class TenQ {
             return null;
         }
 
+        // We get the date first
+        // As a safety, if we fail to retrieve the date
+        // We'll add the current date/time.
+        let date;
+        // console.log(`Date string: ${dateString}`);
+        try {
+            dateString += 'Z';
+            date = new Date(Date.parse(dateString));
+        } catch (e) {}
+        // console.log(`Date: ${date.toUTCString()}`);
+
         let tableInfo = new Map();
         tableInfo.set('title', title);
-        console.log(`Match: ${title}`);
+        // console.log(`Match: ${title}`);
 
         // Since we kept track of the index and made an array of handles
         // We can continue right where we left off.
@@ -133,8 +159,23 @@ export default class TenQ {
         // In theory, now we have category names, and their indices
         // AND i is right where the data starts.
 
-        console.log(categoryInfo.getIndices());
-        console.log(categoryInfo.getCategories());
+        // console.log(categoryInfo.getIndices());
+        // console.log(categoryInfo.getCategories());
+
+        // Now, we make an array of data retrieved from the table.
+        let data = new Array();
+        for (i; i < rowHandles.length; i++) {
+            let blank = await this.rowBlank(rowHandles[i], page);
+            if (blank) {
+                continue;
+            }
+            let rowData = await this.getRowInfo(rowHandles[i], categoryInfo, page);
+            data.push(rowData);
+        }
+
+        // We should now have the data of every row.
+        // And with that, everything for a schedule.
+        return new ScheduleOfInvestments(title, date, categoryInfo, data);
     }
 
     /**
@@ -190,5 +231,59 @@ export default class TenQ {
             tdIndex++;
         }
         return new CategoryInfo(indices, categories);
+    }
+
+    /**
+     * Parses through a table and retrieves all categories.
+     * @param {ElementHandle} rowHandle 
+     * @param {CategoryInfo} categoryInfo 
+     * @param {Page} page 
+     * @returns {Map<String, String>}
+     */
+    async getRowInfo(rowHandle, categoryInfo, page) {
+        let map = new Map();
+        // This will help us see if the row stores a note and nothing else
+        // If it does, we want to return a single key/value.
+        let infoCount = 0;
+        
+        let firstText = '';
+
+        // We create an array of TD's so we can iterate with an index.
+        let tdHandles = new Array();
+        let tds = await rowHandle.$$('td');
+        for await (const tdHandle of tds) {
+            tdHandles.push(tdHandle);
+        }
+
+        // Since we have the indices of every category, we're going
+        // to iterate using those.
+        for (let i = 0; i < categoryInfo.getIndices().length; i++) {
+            let currentHandle = tdHandles[categoryInfo.indexAt(i)];
+            let str = '';
+            try {
+                str = await page.evaluate(
+                    (handle) => handle.querySelector('span').textContent,
+                    currentHandle,
+                );
+            } catch (e) {}
+            if (str.length > 0) {
+                // Info was found in the cell
+                // console.log('Info found!');
+                infoCount++;
+            }
+            // Info or not, we add str to the map.
+            map.set(
+                categoryInfo.categoryAt(i),
+                str
+            );
+        }
+
+        if (infoCount < categoryInfo.getCategories().length) {
+            // console.log('NOTE DETECTED');
+            return {
+                'note': firstText
+            };
+        }
+        return map;
     }
 }

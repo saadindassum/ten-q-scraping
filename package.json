@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "puppeteer": "^23.0.2",
+    "puppeteer": "^23.1.0",
     "puppeteer-core": "^23.0.2"
   },
   "description": "",

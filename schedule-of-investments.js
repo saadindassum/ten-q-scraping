@@ -1,13 +1,3 @@
-export default class ScheduleOfInvestments {
-    /**
-     * 
-     * @param {Array<InvestmentSummary>} investmentSummaryList 
-     */
-    constructor(investmentSummaryList) {
-        this.investmentSummaryList = investmentSummaryList;
-    }
-}
-
 export class InvestmentSummary {
     constructor(companyName, companyLocation, industry, investment, principal, costOfInvestment, fairValue) {
         this.companyName = companyName;

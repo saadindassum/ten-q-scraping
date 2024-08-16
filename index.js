@@ -4,7 +4,7 @@ import puppeteer, { Browser } from 'puppeteer';
 
 import fs from 'fs';
 import readline from 'readline';
-import TenQ from './10q.js';
+import TenQUtility from './10q.js';
 
 async function main() {
   // Launch the browser and open a new blank page
@@ -97,8 +97,8 @@ async function parseEdgarSearch(browser, search) {
 
   console.log(`Parsing filing page: ${link}`);
 
-  const tenQ = new TenQ();
-  await tenQ.parse10Q(browser, link);
+  const tenQUtility = new TenQUtility();
+  await tenQUtility.parse10Q(browser, link);
 
   await page.close();
 
