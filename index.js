@@ -1,4 +1,6 @@
 import puppeteer, { Browser } from 'puppeteer';
+import { TenQDoc } from './ten-q-objects.js';
+import { TenQCollection } from './ten-q-objects.js';
 
 // Or import puppeteer from 'puppeteer-core';
 
@@ -16,13 +18,16 @@ async function main() {
   // First we want the list of searches we'll be making
   // We have those stored at searches.txt
   const searches = await getLines('searches.txt');
-
   for (var i = 0; i < searches.length; i++) {
+    var startTime = performance.now()
     console.log(searches[i]);
+    let documentCollection = await parseEdgarSearch(browser, searches[0]);
+    console.log(documentCollection.toCsv());
+    var endTime = performance.now();
+    console.log(`Time for CIK ${searches[i]}: ${(endTime - startTime)/1000}s`);
   }
 
-//For now we're testing with just one browser.
-await parseEdgarSearch(browser, searches[0]);
+
 
 await browser.close();
 
@@ -50,12 +55,12 @@ async function getLines(filename) {
  * 
  * @param {Browser} browser 
  * @param {string} search
- * @returns {string} the title of the forms found.
+ * @returns {TenQCollection} the title of the forms found.
  */
-async function parseEdgarSearch(browser, search) {
+async function parseEdgarSearch(browser, cik) {
   const page = await browser.newPage();
   // Navigate the page to a URL. Wait until the page is fully loaded.
-  await page.goto(`https://www.sec.gov/edgar/search/#/dateRange=custom&category=custom&entityName=${search}&startdt=2004-01-01&enddt=2024-08-09&forms=10-Q`,
+  await page.goto(`https://www.sec.gov/edgar/search/#/dateRange=custom&category=custom&entityName=${cik}&startdt=2004-01-01&enddt=2024-08-09&forms=10-Q`,
     { waitUntil: 'networkidle0' }
   );
 
@@ -69,38 +74,42 @@ async function parseEdgarSearch(browser, search) {
 
   var firstHit = null;
 
+  let formList = [];
+
   for (const hit of hits) {
     //For the moment, we're going to try logging file dates
     const fileDate = await page.evaluate(
       (el) => el.querySelector('td.filed').textContent,
       hit,
     );
-    // console.log(fileDate);
     //Cool, now we wanna click through each filetype box.
-    if (firstHit === null) {
-      firstHit = hit;
+    const hitHandle = await hit.$('td.filetype > a');
+    // console.log(hitHandle);
+    hitHandle.click();
+  
+    await page.waitForSelector('#open-file', {timeout: 10000});
+    let link;
+    while (!link) {
+      const buttonHandle = await page.$('#open-file');
+      // console.log('Button handle: ', buttonHandle);
+      const jsonLink = await buttonHandle.getProperty('href');
+      link = await jsonLink.jsonValue(); 
     }
+  
+    console.log(`Parsing filing page: ${link}`);
+  
+    const tenQUtility = new TenQUtility();
+    const schedules = await tenQUtility.parse10Q(browser, link);
+    
+    const form = new TenQDoc(fileDate, schedules);
+    formList.push(form);
   }
 
-  const hitHandle = await firstHit.$('td.filetype > a');
-  // console.log(hitHandle);
-  hitHandle.click();
-
-  await page.waitForSelector('#open-file', {timeout: 10000});
-  let link;
-  while (!link) {
-    const buttonHandle = await page.$('#open-file');
-    // console.log('Button handle: ', buttonHandle);
-    const jsonLink = await buttonHandle.getProperty('href');
-    link = await jsonLink.jsonValue(); 
-  }
-
-  console.log(`Parsing filing page: ${link}`);
-
-  const tenQUtility = new TenQUtility();
-  await tenQUtility.parse10Q(browser, link);
+  // 
 
   await page.close();
+
+  return new TenQCollection(cik, formList);
 
 }
 

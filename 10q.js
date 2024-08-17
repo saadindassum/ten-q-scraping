@@ -24,10 +24,9 @@ export default class TenQUtility {
         // 2. If that fails, we parse as text document.
 
         const htmResults = await this.parseHtm(page);
+        await page.close();
         if (htmResults == null) {
-            console.log('No tables found in document, so we parse manually.');
-        } else {
-            // console.log(htmResults[0].toCsv());
+            return [];
         }
         return htmResults;
     }
@@ -178,7 +177,7 @@ export default class TenQUtility {
 
         const sched = new ScheduleOfInvestments(title, date, categoryInfo.getCategories(), data);
         // console.log('\n\nDATA:\n', data[0].get('note'), '\n\n');
-        console.log(sched.toCsv());
+        // console.log(sched.toCsv());
         return sched;
     }
 

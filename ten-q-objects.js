@@ -203,9 +203,41 @@ export class TenQDoc {
     /**
      * 
      * @param {Date} fileDate 
-     * @param {*} categories 
+     * @param {ScheduleOfInvestments[]} schedules 
      */
-    constructor(fileDate, categories) {
+    constructor(fileDate, schedules) {
+        this.fileDate = fileDate;
+        this.schedules = schedules;
+    }
 
+    /**
+     * @returns {String} of schedules separated by one blank line.
+     * Headed by file date
+     */
+    toCsv() {
+        let isoString = this.fileDate.toISOString();
+        let str = `FILE DATE - ${isoString}\n\n`;
+        for (const schedule of schedules) {
+            str += schedule.toCsv();
+            str += '\n';
+        }
+    }
+}
+
+export class TenQCollection {
+    /**
+     * 
+     * @param {String} cik
+     * @param {TenQDoc[]} formList 
+     */
+    constructor(cik, formList) {
+        this.formList = formList;
+    }
+
+    toCsv() {
+        let str = '';
+        for (const form of this.formList) {
+            str += form.toCsv();
+        }
     }
 }
