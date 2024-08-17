@@ -24,7 +24,7 @@ async function main() {
 //For now we're testing with just one browser.
 await parseEdgarSearch(browser, searches[0]);
 
-// await browser.close();
+await browser.close();
 
 }
 

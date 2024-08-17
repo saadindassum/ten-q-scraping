@@ -60,13 +60,13 @@ export class ScheduleOfInvestments {
      * 
      * @param {String} title
      * @param {Date} date 
-     * @param {CategoryInfo} categoryInfo 
+     * @param {String[]} categories 
      * @param {Map<String, String>[]} data
      */
-    constructor(title, date, categoryInfo, data) {
+    constructor(title, date, categories, data) {
         this.title = title;
         this.date = date;
-        this.categoryInfo = categoryInfo;
+        this.categories = categories;
         this.data = data;
     }
 
@@ -76,11 +76,77 @@ export class ScheduleOfInvestments {
      */
     toJson() {
         map = new Map();
-        map.set('title', title);
-        map.set('date', date);
-        map.set('categoryInfo', categoryInfo);
-        map.set('data', data);
+        map.set('title', this.title);
+        map.set('date', this.date);
+        map.set('categoryInfo', this.categories);
+        map.set('data', this.data);
         return map;
+    }
+
+    /**
+     * @returns {String} information formatted in CSV
+     * First line contains the name and date
+     */
+    toCsv() {
+        let str = '';
+        // We have to get the title onto one line
+        let splitTitle = this.title.split('\n');
+        for (const bit of splitTitle) {
+            //We want to check that we're not adding
+            //the date
+            let maybeDate;
+            let datesEqual = false;
+            try {
+                let dateString = bit + 'Z';
+                let maybeDate = new Date(Date.parse(dateString));
+                maybeDate = maybeDate.toUTCString();
+                datesEqual = maybeDate === this.date.toUTCString();
+            } catch (e) {}
+            if (!datesEqual) {
+                if (str && bit != splitTitle[splitTitle.length - 1]) {
+                    // If string not empty
+                    str += ' - ';
+                }
+                if (bit) {
+                    str += bit;
+                } else {
+                    str += '';
+                }
+            }
+            console.log('\n');
+        }
+        str += ','
+        
+        str += this.date.toISOString();
+        str += '\n';
+
+        for (let i = 0; i < this.categories.length; i++) {
+            str += this.categories[i];
+            str += ','
+        }
+        str += '\n';
+
+        // Onto the data
+        for (let i = 0; i < this.data.length; i++) {
+            let row = this.data[i];
+            // We want to check for a note first
+            // console.log(row);
+            let note = row.get('note');
+            if (note) {
+                str += note;
+                str += '\n';
+                continue;
+            }
+            for (let j = 0; j < this.categories.length; j++) {
+                str += row.get(this.categories[j]);
+                str += ',';
+            }
+            str += '\n';
+        }
+
+        // And that's pretty much it.
+
+        return str;
     }
 
     /**
@@ -101,10 +167,10 @@ export class ScheduleOfInvestments {
 
     /**
      * 
-     * @returns {CategoryInfo}
+     * @returns {String[]}
      */
-    getCategoryInfo() {
-        return this.categoryInfo;
+    getCategories() {
+        return this.categories;
     }
 
     /**

@@ -27,7 +27,7 @@ export default class TenQUtility {
         if (htmResults == null) {
             console.log('No tables found in document, so we parse manually.');
         } else {
-            // console.log(htmResults);
+            // console.log(htmResults[0].toCsv());
         }
         return htmResults;
     }
@@ -175,7 +175,11 @@ export default class TenQUtility {
 
         // We should now have the data of every row.
         // And with that, everything for a schedule.
-        return new ScheduleOfInvestments(title, date, categoryInfo, data);
+
+        const sched = new ScheduleOfInvestments(title, date, categoryInfo.getCategories(), data);
+        // console.log('\n\nDATA:\n', data[0].get('note'), '\n\n');
+        console.log(sched.toCsv());
+        return sched;
     }
 
     /**
@@ -247,6 +251,7 @@ export default class TenQUtility {
         let infoCount = 0;
         
         let firstText = '';
+        let indexOfFirst = -1;
 
         // We create an array of TD's so we can iterate with an index.
         let tdHandles = new Array();
@@ -259,7 +264,7 @@ export default class TenQUtility {
         // to iterate using those.
         for (let i = 0; i < categoryInfo.getIndices().length; i++) {
             let currentHandle = tdHandles[categoryInfo.indexAt(i)];
-            let str = '';
+            let str = '\x1b[33mBLANK\x1b[39m';
             try {
                 str = await page.evaluate(
                     (handle) => handle.querySelector('span').textContent,
@@ -268,7 +273,11 @@ export default class TenQUtility {
             } catch (e) {}
             if (str.length > 0) {
                 // Info was found in the cell
-                // console.log('Info found!');
+                // console.log(`Info found: ${str}`);
+                if (!firstText) {
+                    firstText = str;
+                    indexOfFirst = i;
+                }
                 infoCount++;
             }
             // Info or not, we add str to the map.
@@ -278,12 +287,13 @@ export default class TenQUtility {
             );
         }
 
-        if (infoCount < categoryInfo.getCategories().length) {
+        // console.log(`Info count: ${infoCount}`);
+        if (infoCount < 2 && indexOfFirst == 0) {
             // console.log('NOTE DETECTED');
-            return {
-                'note': firstText
-            };
+            map = new Map();
+            map.set('note', firstText);
         }
+        // console.log(map);
         return map;
     }
 }

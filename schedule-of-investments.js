@@ -42,5 +42,3 @@ export class InvestmentSummary {
         return json;
     }
 }
-
-console.log('Class imported!');
