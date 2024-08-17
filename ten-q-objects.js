@@ -113,7 +113,6 @@ export class ScheduleOfInvestments {
                     str += '';
                 }
             }
-            console.log('\n');
         }
         str += ','
         
@@ -130,7 +129,6 @@ export class ScheduleOfInvestments {
         for (let i = 0; i < this.data.length; i++) {
             let row = this.data[i];
             // We want to check for a note first
-            // console.log(row);
             let note = row.get('note');
             if (note) {
                 str += note;
@@ -215,12 +213,13 @@ export class TenQDoc {
      * Headed by file date
      */
     toCsv() {
-        let isoString = this.fileDate.toISOString();
-        let str = `FILE DATE - ${isoString}\n\n`;
-        for (const schedule of schedules) {
+        let str = '';
+        str += `FILE DATE - ${this.fileDate}\n\n`;
+        for (const schedule of this.schedules) {
             str += schedule.toCsv();
             str += '\n';
         }
+        return str;
     }
 }
 
@@ -239,5 +238,6 @@ export class TenQCollection {
         for (const form of this.formList) {
             str += form.toCsv();
         }
+        return str;
     }
 }

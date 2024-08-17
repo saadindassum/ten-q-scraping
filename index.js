@@ -21,10 +21,19 @@ async function main() {
   for (var i = 0; i < searches.length; i++) {
     var startTime = performance.now()
     console.log(searches[i]);
-    let documentCollection = await parseEdgarSearch(browser, searches[0]);
-    console.log(documentCollection.toCsv());
-    var endTime = performance.now();
-    console.log(`Time for CIK ${searches[i]}: ${(endTime - startTime)/1000}s`);
+    try {
+      let documentCollection = await parseEdgarSearch(browser, searches[0]);
+      let outputString = documentCollection.toCsv();
+      var endTime = performance.now();
+      console.log(`Time for CIK ${searches[i]}: ${(endTime - startTime)/1000}s`);
+      fs.writeFileSync(
+        `./output/${searches[i]}.csv`,
+        outputString
+      );
+    } catch (e) {
+      console.error(e);
+    }
+    console.log('\n');
   }
 
 
@@ -59,13 +68,11 @@ async function getLines(filename) {
  */
 async function parseEdgarSearch(browser, cik) {
   const page = await browser.newPage();
+
   // Navigate the page to a URL. Wait until the page is fully loaded.
   await page.goto(`https://www.sec.gov/edgar/search/#/dateRange=custom&category=custom&entityName=${cik}&startdt=2004-01-01&enddt=2024-08-09&forms=10-Q`,
-    { waitUntil: 'networkidle0' }
+    { waitUntil: 'domcontentloaded' }
   );
-
-  // Set screen size.
-  await page.setViewport({width: 1080, height: 1024});
 
   //Here's the table containing all the forms. We'll get its element.
   const hits = await page.$$('#hits > table > tbody > tr');

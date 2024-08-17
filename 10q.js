@@ -14,7 +14,7 @@ export default class TenQUtility {
      */
     async parse10Q(browser, link) {
         const page = await browser.newPage();
-        await page.goto(link, { waitUntil: 'networkidle0' });
+        await page.goto(link, { waitUntil: 'domcontentloaded' });
         
         // What I figured out here is sometimes we have an organized htm file,
         // using tags in an organized way.
@@ -263,7 +263,8 @@ export default class TenQUtility {
         // to iterate using those.
         for (let i = 0; i < categoryInfo.getIndices().length; i++) {
             let currentHandle = tdHandles[categoryInfo.indexAt(i)];
-            let str = '\x1b[33mBLANK\x1b[39m';
+            // let str = '\x1b[33mBLANK\x1b[39m';
+            let str = '';
             try {
                 str = await page.evaluate(
                     (handle) => handle.querySelector('span').textContent,
@@ -279,6 +280,8 @@ export default class TenQUtility {
                 }
                 infoCount++;
             }
+            // We have to get rid of all commas
+            str = str.replace(',', '');
             // Info or not, we add str to the map.
             map.set(
                 categoryInfo.categoryAt(i),

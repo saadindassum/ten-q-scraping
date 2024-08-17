@@ -4,6 +4,9 @@ node_modules/
 #temp
 tmp/
 
+#output
+output/*
+
 # Logs
 logs
 *.log
