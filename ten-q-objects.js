@@ -202,10 +202,12 @@ export class TenQDoc {
      * 
      * @param {Date} fileDate 
      * @param {ScheduleOfInvestments[]} schedules 
+     * @param {String} link
      */
-    constructor(fileDate, schedules) {
+    constructor(fileDate, schedules, link) {
         this.fileDate = fileDate;
         this.schedules = schedules;
+        this.link = link;
     }
 
     /**
@@ -214,10 +216,15 @@ export class TenQDoc {
      */
     toCsv() {
         let str = '';
+        str += this.link;
+        str += '\n';
         str += `FILE DATE - ${this.fileDate}\n\n`;
         for (const schedule of this.schedules) {
             str += schedule.toCsv();
             str += '\n';
+        }
+        if (this.schedules.length === 0) {
+            str += 'NO SCHEDULES FOUND\n';
         }
         return str;
     }

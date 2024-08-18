@@ -10,11 +10,11 @@ export default class TenQUtility {
      * 
      * @param {Browser} browser an open browser to use
      * @param {string} link a link to the filing page
-     * @returns {ScheduleOfInvestments[]} a list of a schedule of investments.
+     * @returns {Promise<ScheduleOfInvestments[]>} a list of a schedule of investments.
      */
     async parse10Q(browser, link) {
         const page = await browser.newPage();
-        await page.goto(link, { waitUntil: 'domcontentloaded' });
+        await page.goto(link, { waitUntil: 'networkidle0' });
         
         // What I figured out here is sometimes we have an organized htm file,
         // using tags in an organized way.
@@ -25,22 +25,25 @@ export default class TenQUtility {
 
         const htmResults = await this.parseHtm(page);
         await page.close();
-        if (htmResults == null) {
+        if (htmResults === null || htmResults.length == 0) {
+            console.log(`%cNO RESULTS FOUND IN LINK ${link}`, 'color: red;');
             return [];
         }
+        console.log('%cRESULTS FOUND', 'color: green;');
         return htmResults;
     }
 
     /**
      * 
      * @param {Page} page the page we're parsing
-     * @returns {ScheduleOfInvestments[]} all the SOI's found in the page.
+     * @returns {Promise<ScheduleOfInvestments[]>} all the SOI's found in the page.
      */
     async parseHtm(page) {
         // This will get all our tables.
         const tables = await page.$$('body > div > table > tbody');
         // console.log(`Tables found: ${tables.length}`);
         if (tables.length === 0) {
+            console.log(`%cNO TABLES FOUND`, 'color: yellow;');
             return null;
         }
         // console.log(`${tables.length} table(s) found. Adding all schedules`);
@@ -64,7 +67,7 @@ export default class TenQUtility {
      * 
      * @param {ElementHandle} tableHandle
      * @param {Page} page
-     * @returns {ScheduleOfInvestments} or null.
+     * @returns {Promise<ScheduleOfInvestments>} or null.
      */
     async parseTable(tableHandle, page) {
         const rows = await tableHandle.$$('tr');
@@ -177,7 +180,7 @@ export default class TenQUtility {
 
         const sched = new ScheduleOfInvestments(title, date, categoryInfo.getCategories(), data);
         // console.log('\n\nDATA:\n', data[0].get('note'), '\n\n');
-        // console.log(sched.toCsv());
+        console.log(sched.toCsv());
         return sched;
     }
 
@@ -185,7 +188,7 @@ export default class TenQUtility {
      * Parses the TD elements in the row, and returns true if none of them have text.
      * @param {ElementHandle} rowHandle
      * @param {Page} page
-     * @returns {boolean} Whether the row is empty or not
+     * @returns {Promise<Boolean>} Whether the row is empty or not
      */
     async rowBlank(rowHandle, page) {
         const tds = await rowHandle.$$('td');
@@ -208,7 +211,7 @@ export default class TenQUtility {
     /**
      * Gets categories for an organized 10Q document.
      * @param {ElementHandle} rowHandle
-     * @returns {CategoryInfo} indices and categories.
+     * @returns {Promise<CategoryInfo>} indices and categories.
      * "categories" contains the string name of the category, while
      * "indices" contains the actual indices of the categories.
      */
@@ -241,7 +244,7 @@ export default class TenQUtility {
      * @param {ElementHandle} rowHandle 
      * @param {CategoryInfo} categoryInfo 
      * @param {Page} page 
-     * @returns {Map<String, String>}
+     * @returns {Promise<Map<String, String>>}
      */
     async getRowInfo(rowHandle, categoryInfo, page) {
         let map = new Map();

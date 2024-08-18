@@ -9,7 +9,6 @@ import readline from 'readline';
 import TenQUtility from './10q.js';
 
 async function main() {
-  // Launch the browser and open a new blank page
   const browser = await puppeteer.launch({
     userDataDir: "./tmp",
     headless: false,
@@ -18,34 +17,67 @@ async function main() {
   // First we want the list of searches we'll be making
   // We have those stored at searches.txt
   const searches = await getLines('searches.txt');
-  for (var i = 0; i < searches.length; i++) {
-    var startTime = performance.now()
-    console.log(searches[i]);
-    try {
-      let documentCollection = await parseEdgarSearch(browser, searches[0]);
-      let outputString = documentCollection.toCsv();
-      var endTime = performance.now();
-      console.log(`Time for CIK ${searches[i]}: ${(endTime - startTime)/1000}s`);
-      fs.writeFileSync(
-        `./output/${searches[i]}.csv`,
-        outputString
-      );
-    } catch (e) {
-      console.error(e);
+
+  // To speed things up, we'll be doing five CIK's at a time
+  // Once we fill up the array with 5 promises (or run out of CIK's)
+  // we await Promise.all() 
+
+  let promises = new Array();
+
+  for (var i = 0; i < /*searches.length*/1; i++) {
+    let cik = searches[i];
+    //If we don't do this, we won't get any hits on EDGAR
+    while (cik.length < 10) {
+      cik = '0' + cik;
     }
-    console.log('\n');
+    const promise = scrapeCik(browser, cik);
+    promises.push(promise);
+    if (promises.length > 2) {
+      let results = await Promise.all(promises);
+      for (const result of results) {
+        console.log(result);
+      }
+      promises = new Array();
+    }
+  }
+  if (promises.length > 0) {
+    let results = await Promise.all(promises);
+    for (const result of results) {
+      console.log(result);
+    }
   }
 
+  await browser.close();
+}
 
-
-await browser.close();
-
+/**
+ * Opens a browser and scrapes EDGAR for information about a CIK
+ * and writes found data to a csv file.
+ * @param {String} cik
+ * @param {Browser} browser
+ * @returns {Promise<Boolean>} success or failure.
+ */
+async function scrapeCik(browser, cik) {
+  // Launch the browser and open a new blank page
+  console.log('Attempting to parse ', cik);
+  try {
+    let documentCollection = await parseEdgarSearch(browser, cik);
+    let outputString = documentCollection.toCsv();
+    fs.writeFileSync(
+      `./output/${cik}.csv`,
+      outputString
+    );
+  } catch (e) {
+    console.error(e);
+    return false;
+  }
+  return true;
 }
 
 /**
  * Takes a filename outputs the file line by line as strings
- * @param {string[]} filename
- * @returns {string[]} Separated lines of the file
+ * @param {String[]} filename
+ * @returns {Promise<String[]>} Separated lines of the file
 */
 async function getLines(filename) {
     const fileStream = fs.createReadStream(filename);
@@ -64,24 +96,23 @@ async function getLines(filename) {
  * 
  * @param {Browser} browser 
  * @param {string} search
- * @returns {TenQCollection} the title of the forms found.
+ * @returns {Promise<TenQCollection>} the title of the forms found.
  */
-async function parseEdgarSearch(browser, cik) {
+  async function parseEdgarSearch(browser, cik) {
   const page = await browser.newPage();
 
   // Navigate the page to a URL. Wait until the page is fully loaded.
   await page.goto(`https://www.sec.gov/edgar/search/#/dateRange=custom&category=custom&entityName=${cik}&startdt=2004-01-01&enddt=2024-08-09&forms=10-Q`,
-    { waitUntil: 'domcontentloaded' }
+    { waitUntil: 'networkidle0' }
   );
 
   //Here's the table containing all the forms. We'll get its element.
   const hits = await page.$$('#hits > table > tbody > tr');
 
-  // console.log(`Hits length: ${hits.length}`);
-
-  var firstHit = null;
+  console.log(`Hits length: ${hits.length}`);
 
   let formList = [];
+  const tenQUtility = new TenQUtility();
 
   for (const hit of hits) {
     //For the moment, we're going to try logging file dates
@@ -94,7 +125,7 @@ async function parseEdgarSearch(browser, cik) {
     // console.log(hitHandle);
     hitHandle.click();
   
-    await page.waitForSelector('#open-file', {timeout: 10000});
+    await page.waitForSelector('#open-file', {timeout: 100000});
     let link;
     while (!link) {
       const buttonHandle = await page.$('#open-file');
@@ -105,10 +136,9 @@ async function parseEdgarSearch(browser, cik) {
   
     console.log(`Parsing filing page: ${link}`);
   
-    const tenQUtility = new TenQUtility();
     const schedules = await tenQUtility.parse10Q(browser, link);
     
-    const form = new TenQDoc(fileDate, schedules);
+    const form = new TenQDoc(fileDate, schedules, link);
     formList.push(form);
   }
 
