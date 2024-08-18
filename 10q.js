@@ -8,12 +8,11 @@ export default class TenQUtility {
 
     /**
      * 
-     * @param {Browser} browser an open browser to use
+     * @param {Page} page the page to use
      * @param {string} link a link to the filing page
      * @returns {Promise<ScheduleOfInvestments[]>} a list of a schedule of investments.
      */
-    async parse10Q(browser, link) {
-        const page = await browser.newPage();
+    async parse10Q(page, link) {
         await page.goto(link, { waitUntil: 'networkidle0' });
         
         // What I figured out here is sometimes we have an organized htm file,
@@ -24,7 +23,6 @@ export default class TenQUtility {
         // 2. If that fails, we parse as text document.
 
         const htmResults = await this.parseHtm(page);
-        await page.close();
         if (htmResults === null || htmResults.length == 0) {
             console.log(`%cNO RESULTS FOUND IN LINK ${link}`, 'color: red;');
             return [];
@@ -43,7 +41,7 @@ export default class TenQUtility {
         const tables = await page.$$('body > div > table > tbody');
         // console.log(`Tables found: ${tables.length}`);
         if (tables.length === 0) {
-            console.log(`%cNO TABLES FOUND`, 'color: yellow;');
+            // console.log(`%cNO TABLES FOUND`, 'color: yellow;');
             return null;
         }
         // console.log(`${tables.length} table(s) found. Adding all schedules`);
@@ -180,7 +178,7 @@ export default class TenQUtility {
 
         const sched = new ScheduleOfInvestments(title, date, categoryInfo.getCategories(), data);
         // console.log('\n\nDATA:\n', data[0].get('note'), '\n\n');
-        console.log(sched.toCsv());
+        // console.log(sched.toCsv());
         return sched;
     }
 
