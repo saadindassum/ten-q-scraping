@@ -45,6 +45,7 @@ async function main() {
 
   await cluster.idle();
   await cluster.close();
+  console.log('%c Completed program!', 'color:green;');
 }
 
 /**
@@ -64,7 +65,7 @@ async function initCluster(cluster) {
         }
       });
     } catch (e) {
-      console.log(`%c ERROR AT CIK ${cik}`, 'color: red;');
+      // console.log(`%c ERROR AT CIK ${cik}`, 'color: red;');
       console.error(e);
       let str = '';
       str += e;
@@ -187,7 +188,7 @@ async function parseEdgarSearch(page, cik) {
     // console.log(`Parsing filing page: ${links[i]}`);
     // console.log(`Link ${i}/${links.length}`);
     const schedules = await tenQUtility.parse10Q(page, links[i]);
-    console.log(`Schedules in: ${schedules}`);
+    // console.log(`Schedules in: ${schedules}`);
     const form = new TenQDoc(fileDates[i], schedules, links[i]);
     formList.push(form);
   }

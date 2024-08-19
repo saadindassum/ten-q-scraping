@@ -23,11 +23,11 @@ export default class TenQUtility {
         // 2. If that fails, we parse as text document.
 
         const htmResults = await this.parseHtm(page);
-        console.log(`%c ${htmResults}`, 'color: orange');
         if (htmResults === null || htmResults.length == 0) {
             // console.log(`%cNO RESULTS FOUND IN LINK ${link}`, 'color: red;');
             return [];
         }
+        console.log(`%c ${htmResults}`, 'color: orange');
         console.log(`%cRESULTS FOUND IN ${link}`, 'color: green;');
         return htmResults;
     }
@@ -70,7 +70,6 @@ export default class TenQUtility {
                 scheduleList.push(tableInfo);
             }
         }
-        console.log('%c \n\n\nFINISHED PARSING TABLES\n\n\n', 'color:green');
         return scheduleList;
     }
 
@@ -135,7 +134,7 @@ export default class TenQUtility {
             return null;
         }
 
-        console.log(`%c ${title}`, 'color:green;');
+        // console.log(`%c ${title}`, 'color:green;');
 
         // We get the date first
         // As a safety, if we fail to retrieve the date

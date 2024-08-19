@@ -207,7 +207,9 @@ export class TenQDoc {
     constructor(fileDate, schedules, link) {
         this.fileDate = fileDate;
         this.schedules = schedules;
-        console.log(schedules);
+        if (schedules.length != 0) {
+            console.log(schedules);
+        }
         this.link = link;
     }
 
