@@ -207,6 +207,7 @@ export class TenQDoc {
     constructor(fileDate, schedules, link) {
         this.fileDate = fileDate;
         this.schedules = schedules;
+        console.log(schedules);
         this.link = link;
     }
 
@@ -223,7 +224,7 @@ export class TenQDoc {
             str += schedule.toCsv();
             str += '\n';
         }
-        if (this.schedules.length === 0) {
+        if (this.schedules.length < 1) {
             str += 'NO SCHEDULES FOUND\n';
         }
         return str;

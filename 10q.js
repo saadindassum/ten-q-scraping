@@ -23,6 +23,7 @@ export default class TenQUtility {
         // 2. If that fails, we parse as text document.
 
         const htmResults = await this.parseHtm(page);
+        console.log(`%c ${htmResults}`, 'color: orange');
         if (htmResults === null || htmResults.length == 0) {
             // console.log(`%cNO RESULTS FOUND IN LINK ${link}`, 'color: red;');
             return [];
@@ -80,7 +81,6 @@ export default class TenQUtility {
      * @returns {Promise<ScheduleOfInvestments>} or null.
      */
     async parseTable(tableHandle, page) {
-        console.log('Marco');
         const rows = await tableHandle.$$('tr');
         // console.log(`Rows found in table: ${rows.length}`);
 
@@ -135,7 +135,7 @@ export default class TenQUtility {
             return null;
         }
 
-        // console.log(`%c ${title}`, 'color:green;');
+        console.log(`%c ${title}`, 'color:green;');
 
         // We get the date first
         // As a safety, if we fail to retrieve the date
@@ -187,7 +187,6 @@ export default class TenQUtility {
             data.push(rowData);
         }
 
-        console.log('polo');
         // We should now have the data of every row.
         // And with that, everything for a schedule.
 

@@ -19,8 +19,8 @@ async function main() {
   // That will speed things up.
   const cluster = await Cluster.launch({
     concurrency: Cluster.CONCURRENCY_CONTEXT,
-    maxConcurrency: 2,
-    timeout: 120000,
+    maxConcurrency: 3,
+    timeout: 1200000,
     puppeteerOptions: {
       headless: false,
       args: [`--window-size=${1920},${1080}`],
@@ -29,18 +29,18 @@ async function main() {
 
   await initCluster(cluster);
 
-  // for (var i = 0; i < searches.length; i++) {
-  //   let cik = searches[i];
-  //   //If we don't do this, we won't get any hits on EDGAR
-  //   while (cik.length < 10) {
-  //     cik = '0' + cik;
-  //   }
-  //   cluster.queue(cik);
-  // }
+  for (var i = 0; i < searches.length; i++) {
+    let cik = searches[i];
+    //If we don't do this, we won't get any hits on EDGAR
+    while (cik.length < 10) {
+      cik = '0' + cik;
+    }
+    cluster.queue(cik);
+  }
 
   // These ones always get errors:
   // cluster.queue('0001383414');
-  cluster.queue('0000017313');
+  // cluster.queue('0000017313');
 
 
   await cluster.idle();
@@ -56,7 +56,7 @@ async function initCluster(cluster) {
     try {
       let documentCollection = await parseEdgarSearch(page, cik);
       let outputString = documentCollection.toCsv();
-      fs.writeFile('/Users/joe/test.txt', outputString, err => {
+      fs.writeFile(`./output/${cik}.csv`, outputString, err => {
         if (err) {
           console.error(err);
         } else {
@@ -66,10 +66,12 @@ async function initCluster(cluster) {
     } catch (e) {
       console.log(`%c ERROR AT CIK ${cik}`, 'color: red;');
       console.error(e);
+      let str = '';
+      str += e;
       try {
         fs.writeFileSync(
           `./output/${cik}.txt`,
-          'ERROR FINDING INFORMATION'
+          str
         );
       } catch (e) { }
       return false;
@@ -174,6 +176,9 @@ async function parseEdgarSearch(page, cik) {
     try {
       await closeHandle.click();
     } catch (e) { }
+    // We add a delay because this seems to be the most intensive
+    // fetch, and where the SEC's most likely to block us.
+    await delay(250);
   }
 
   // And now we have a full list of 10Q links!
@@ -182,6 +187,7 @@ async function parseEdgarSearch(page, cik) {
     // console.log(`Parsing filing page: ${links[i]}`);
     // console.log(`Link ${i}/${links.length}`);
     const schedules = await tenQUtility.parse10Q(page, links[i]);
+    console.log(`Schedules in: ${schedules}`);
     const form = new TenQDoc(fileDates[i], schedules, links[i]);
     formList.push(form);
   }
@@ -192,6 +198,15 @@ async function parseEdgarSearch(page, cik) {
   console.log('Finished CIK ', cik);
   return new TenQCollection(cik, formList);
 
+}
+
+/**
+ * Await this do add a delay
+ * @param {Number} time 
+ * @returns {Promise}
+ */
+async function delay(time) {
+  return new Promise(resolve => setTimeout(resolve, time));
 }
 
 
