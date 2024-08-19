@@ -4,7 +4,7 @@ import { ScheduleOfInvestments } from './ten-q-objects.js';
 import { InvestmentSummary } from './schedule-of-investments.js';
 
 export default class TenQUtility {
-    constructor() {}
+    constructor() { }
 
     /**
      * 
@@ -14,7 +14,7 @@ export default class TenQUtility {
      */
     async parse10Q(page, link) {
         await page.goto(link, { waitUntil: 'networkidle0' });
-        
+
         // What I figured out here is sometimes we have an organized htm file,
         // using tags in an organized way.
         // If we don't have that, THAT'S where the heavy lifting comes in.
@@ -68,12 +68,11 @@ export default class TenQUtility {
                 // console.log(tableInfo.getTitle(), '\n');
                 scheduleList.push(tableInfo);
             }
-            await this.delay(250);
         }
         console.log('%c \n\n\nFINISHED PARSING TABLES\n\n\n', 'color:green');
         return scheduleList;
     }
-    
+
     /**
      * 
      * @param {ElementHandle} tableHandle
@@ -146,7 +145,7 @@ export default class TenQUtility {
         try {
             dateString += 'Z';
             date = new Date(Date.parse(dateString));
-        } catch (e) {}
+        } catch (e) { }
         // console.log(`Date: ${date.toUTCString()}`);
 
         let tableInfo = new Map();
@@ -211,7 +210,7 @@ export default class TenQUtility {
                 const str = await page.evaluate(
                     (handle) => handle.querySelector('span').textContent,
                     tdHandle,
-                  );
+                );
                 if (str.length != 0) {
                     return false;
                 }
@@ -221,7 +220,7 @@ export default class TenQUtility {
         }
         return true;
     }
-    
+
     /**
      * Gets categories for an organized 10Q document.
      * @param {ElementHandle} rowHandle
@@ -265,7 +264,7 @@ export default class TenQUtility {
         // This will help us see if the row stores a note and nothing else
         // If it does, we want to return a single key/value.
         let infoCount = 0;
-        
+
         let firstText = '';
         let indexOfFirst = -1;
 
@@ -287,7 +286,7 @@ export default class TenQUtility {
                     (handle) => handle.querySelector('span').textContent,
                     currentHandle,
                 );
-            } catch (e) {}
+            } catch (e) { }
             if (str.length > 0) {
                 // Info was found in the cell
                 // console.log(`Info found: ${str}`);
@@ -314,14 +313,5 @@ export default class TenQUtility {
         }
         // console.log(map);
         return map;
-    }
-
-    /**
-     * 
-     * @param {Number} time
-     * @returns {Promise}
-     */
-    async delay(time) {
-        return new Promise(resolve => setTimeout(resolve, time));
     }
 }

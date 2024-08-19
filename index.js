@@ -1,5 +1,5 @@
 import puppeteer, { Browser, Page } from 'puppeteer';
-import { Cluster }  from 'puppeteer-cluster';
+import { Cluster } from 'puppeteer-cluster';
 import { TenQDoc } from './ten-q-objects.js';
 import { TenQCollection } from './ten-q-objects.js';
 
@@ -20,6 +20,7 @@ async function main() {
   const cluster = await Cluster.launch({
     concurrency: Cluster.CONCURRENCY_CONTEXT,
     maxConcurrency: 2,
+    timeout: 120000,
     puppeteerOptions: {
       headless: false,
       args: [`--window-size=${1920},${1080}`],
@@ -70,7 +71,7 @@ async function initCluster(cluster) {
           `./output/${cik}.txt`,
           'ERROR FINDING INFORMATION'
         );
-      } catch (e) {}
+      } catch (e) { }
       return false;
     }
   });
@@ -106,16 +107,16 @@ async function initCluster(cluster) {
  * @returns {Promise<String[]>} Separated lines of the file
 */
 async function getLines(filename) {
-    const fileStream = fs.createReadStream(filename);
-    const lineScanner = readline.createInterface({
-      input: fileStream,
-      crlfDelay: Infinity
-    });
-    let lines = new Array();
-    for await (const line of lineScanner) {
-      lines.push(line);
-    }
-    return lines;
+  const fileStream = fs.createReadStream(filename);
+  const lineScanner = readline.createInterface({
+    input: fileStream,
+    crlfDelay: Infinity
+  });
+  let lines = new Array();
+  for await (const line of lineScanner) {
+    lines.push(line);
+  }
+  return lines;
 }
 
 /**
@@ -124,7 +125,7 @@ async function getLines(filename) {
  * @param {string} search
  * @returns {Promise<TenQCollection>} the title of the forms found.
  */
-  async function parseEdgarSearch(page, cik) {
+async function parseEdgarSearch(page, cik) {
 
   // Navigate the page to a URL. Wait until the page is fully loaded.
   await page.goto(`https://www.sec.gov/edgar/search/#/dateRange=custom&category=custom&entityName=${cik}&startdt=2004-01-01&enddt=2024-08-09&forms=10-Q`,
@@ -156,28 +157,28 @@ async function getLines(filename) {
     const hitHandle = await hit.$('td.filetype > a');
     // console.log(hitHandle);
     hitHandle.click();
-  
-    await page.waitForSelector('#open-file', {timeout: 10000});
+
+    await page.waitForSelector('#open-file', { timeout: 10000 });
     let link;
     while (!link) {
       const buttonHandle = await page.$('#open-file');
       // console.log('Button handle: ', buttonHandle);
       const jsonLink = await buttonHandle.getProperty('href');
-      link = await jsonLink.jsonValue(); 
+      link = await jsonLink.jsonValue();
     }
     links.push(link);
     // Now we have to close the preview page, so we find the button
     // for that
-    await page.waitForSelector('#previewer > div > div > div.modal-header.border.border-0 > button', {timeout: 10000});
+    await page.waitForSelector('#previewer > div > div > div.modal-header.border.border-0 > button', { timeout: 10000 });
     const closeHandle = await page.$('#previewer > div > div > div.modal-header.border.border-0 > button');
     try {
       await closeHandle.click();
-    } catch (e) {}
+    } catch (e) { }
   }
 
   // And now we have a full list of 10Q links!
   for (let i = 0; i < links.length; i++) {
-    
+
     // console.log(`Parsing filing page: ${links[i]}`);
     // console.log(`Link ${i}/${links.length}`);
     const schedules = await tenQUtility.parse10Q(page, links[i]);
