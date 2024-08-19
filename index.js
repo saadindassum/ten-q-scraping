@@ -28,17 +28,19 @@ async function main() {
 
   await initCluster(cluster);
 
-  for (var i = 0; i < searches.length; i++) {
-    let cik = searches[i];
-    //If we don't do this, we won't get any hits on EDGAR
-    while (cik.length < 10) {
-      cik = '0' + cik;
-    }
-    cluster.queue(cik);
-  }
+  // for (var i = 0; i < searches.length; i++) {
+  //   let cik = searches[i];
+  //   //If we don't do this, we won't get any hits on EDGAR
+  //   while (cik.length < 10) {
+  //     cik = '0' + cik;
+  //   }
+  //   cluster.queue(cik);
+  // }
 
-  // This one always gets errors so we can test with it.
+  // These ones always get errors:
   // cluster.queue('0001383414');
+  cluster.queue('0000017313');
+
 
   await cluster.idle();
   await cluster.close();
@@ -53,10 +55,13 @@ async function initCluster(cluster) {
     try {
       let documentCollection = await parseEdgarSearch(page, cik);
       let outputString = documentCollection.toCsv();
-      fs.writeFileSync(
-        `./output/${cik}.csv`,
-        outputString
-      );
+      fs.writeFile('/Users/joe/test.txt', outputString, err => {
+        if (err) {
+          console.error(err);
+        } else {
+          // file written successfully
+        }
+      });
     } catch (e) {
       console.log(`%c ERROR AT CIK ${cik}`, 'color: red;');
       console.error(e);
@@ -68,7 +73,6 @@ async function initCluster(cluster) {
       } catch (e) {}
       return false;
     }
-    console.log('\n\n\n');
   });
 }
 
@@ -166,14 +170,16 @@ async function getLines(filename) {
     // for that
     await page.waitForSelector('#previewer > div > div > div.modal-header.border.border-0 > button', {timeout: 10000});
     const closeHandle = await page.$('#previewer > div > div > div.modal-header.border.border-0 > button');
-    await closeHandle.click();
+    try {
+      await closeHandle.click();
+    } catch (e) {}
   }
 
   // And now we have a full list of 10Q links!
   for (let i = 0; i < links.length; i++) {
     
-    console.log(`Parsing filing page: ${links[i]}`);
-    console.log(`Link ${i}/${links.length}`);
+    // console.log(`Parsing filing page: ${links[i]}`);
+    // console.log(`Link ${i}/${links.length}`);
     const schedules = await tenQUtility.parse10Q(page, links[i]);
     const form = new TenQDoc(fileDates[i], schedules, links[i]);
     formList.push(form);
@@ -182,7 +188,7 @@ async function getLines(filename) {
   // 
 
   await page.close();
-
+  console.log('Finished CIK ', cik);
   return new TenQCollection(cik, formList);
 
 }

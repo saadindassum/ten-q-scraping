@@ -24,10 +24,10 @@ export default class TenQUtility {
 
         const htmResults = await this.parseHtm(page);
         if (htmResults === null || htmResults.length == 0) {
-            console.log(`%cNO RESULTS FOUND IN LINK ${link}`, 'color: red;');
+            // console.log(`%cNO RESULTS FOUND IN LINK ${link}`, 'color: red;');
             return [];
         }
-        console.log('%cRESULTS FOUND', 'color: green;');
+        console.log(`%cRESULTS FOUND IN ${link}`, 'color: green;');
         return htmResults;
     }
 
@@ -50,14 +50,27 @@ export default class TenQUtility {
 
         let tableInfo;
         for await (const tableHandle of tables) {
-            tableInfo = await this.parseTable(tableHandle, page);
+            try {
+                tableInfo = await this.parseTable(tableHandle, page);
+            } catch (e) {
+                console.log('%c error caught while parsing table');
+                console.log(tableHandle);
+                tableInfo = new ScheduleOfInvestments(
+                    'ERROR TABLE',
+                    new Date(Date.now()),
+                    [],
+                    []
+                );
+            }
             if (tableInfo == null) {
                 continue;
             } else {
                 // console.log(tableInfo.getTitle(), '\n');
                 scheduleList.push(tableInfo);
             }
+            await this.delay(250);
         }
+        console.log('%c \n\n\nFINISHED PARSING TABLES\n\n\n', 'color:green');
         return scheduleList;
     }
     
@@ -68,6 +81,7 @@ export default class TenQUtility {
      * @returns {Promise<ScheduleOfInvestments>} or null.
      */
     async parseTable(tableHandle, page) {
+        console.log('Marco');
         const rows = await tableHandle.$$('tr');
         // console.log(`Rows found in table: ${rows.length}`);
 
@@ -77,7 +91,6 @@ export default class TenQUtility {
         for await (const rowHandle of rows) {
             rowHandles.push(rowHandle);
         }
-
         // This loop is going to get our title.
         // I'm noticing there's only one td in the title rows.
         // We can use that to determine whether the current row is a title
@@ -85,9 +98,7 @@ export default class TenQUtility {
         // for no apparent reason.
         let title = '';
         let i = 0;
-
         let dateString = '';
-
         for (i; i < rowHandles.length; i++) {
             const tds = await rowHandles[i].$$('td');
             if (tds.length > 1) {
@@ -120,11 +131,12 @@ export default class TenQUtility {
                 }
             }
         }
-
         const lcTitle = title.toLowerCase();
         if (!lcTitle.includes('schedule of')) {
             return null;
         }
+
+        // console.log(`%c ${title}`, 'color:green;');
 
         // We get the date first
         // As a safety, if we fail to retrieve the date
@@ -146,7 +158,6 @@ export default class TenQUtility {
 
         // First we want to figure out whether there's a separation row,
         // and once that's out of the way, we find category info.
-
         let categoryInfo = null;
         while (categoryInfo == null && i < rowHandles.length) {
             const blank = await this.rowBlank(rowHandles[i], page);
@@ -155,6 +166,10 @@ export default class TenQUtility {
             }
             i++;
         }
+
+        //CONSISTENCY CHECKPOINT
+        //Code reaches this point with no errors.
+        // console.log('polo');
 
         // In theory, now we have category names, and their indices
         // AND i is right where the data starts.
@@ -173,6 +188,7 @@ export default class TenQUtility {
             data.push(rowData);
         }
 
+        console.log('polo');
         // We should now have the data of every row.
         // And with that, everything for a schedule.
 
@@ -298,5 +314,14 @@ export default class TenQUtility {
         }
         // console.log(map);
         return map;
+    }
+
+    /**
+     * 
+     * @param {Number} time
+     * @returns {Promise}
+     */
+    async delay(time) {
+        return new Promise(resolve => setTimeout(resolve, time));
     }
 }
