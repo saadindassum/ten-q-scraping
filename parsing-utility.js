@@ -1,9 +1,9 @@
 export class ParsingUtility {
-    constructor () {}
+    constructor() { }
 
     /**
      * 
-     * @param {String} rawDateString
+     * @param {String} dateString
      * @returns Date from string
      */
     getDate(dateString) {
@@ -13,7 +13,7 @@ export class ParsingUtility {
             dateString += 'Z';
             date = new Date(Date.parse(dateString));
         } catch (e) {
-            return Date(Date.now());
+            return null;
         }
         return date;
     }

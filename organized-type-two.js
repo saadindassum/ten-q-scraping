@@ -9,7 +9,7 @@ var parsingUtility = new ParsingUtility();
  * For parsing 10Qs where tables are wrapped in divs
  */
 export class OrganizedTypeTwo {
-    constructor() {}
+    constructor() { }
 
     /**
      * For 10Qs where the table titles are in a div
@@ -18,6 +18,7 @@ export class OrganizedTypeTwo {
      * @returns {Promise<ScheduleOfInvestments>}
      */
     async parseDiv(divHandle, page) {
+        console.log('Parsing div!');
         const pHandles = divHandle.$$('p > font');
 
         // We get the title, we check if it's a schedule
@@ -28,10 +29,7 @@ export class OrganizedTypeTwo {
 
         for (const pHandle of pHandles) {
             try {
-                const str = await page.evaluate(
-                    handle => handle.textContent,
-                    pHandle
-                );
+                const str = await this.parseP(pHandle, page);
                 if (str) {
                     title += str;
                     //Because the date always comes last.
@@ -47,7 +45,7 @@ export class OrganizedTypeTwo {
             return null;
         }
 
-        console.log(`%c ${title}`);
+        console.log(`%c ${title}`, 'color: green;');
 
         let date = parsingUtility.getDate();
 
@@ -66,7 +64,8 @@ export class OrganizedTypeTwo {
     * @returns {Promise<Map<String, String>>} or null.
     */
     async parseTable(tableHandle, title, date, page) {
-
+        // Tells us whether we're dealing with the known microvariation
+        let microvar = (date == null);
         let i = 0;
         const rows = await tableHandle.$$('tr');
         let rowHandles = new Array();
@@ -74,12 +73,20 @@ export class OrganizedTypeTwo {
             rowHandles.push(rowHandle);
         }
 
+        // There's a micro variation where the date
+        // is in the top row of the table.
+        // We must account for that.
+
         let tableInfo = new Map();
         let categoryInfo = null;
-        while (categoryInfo == null && i < rowHandles.length) {
+        while ((!categoryInfo || !date) && i < rowHandles.length) {
             const blank = await this.rowBlank(rowHandles[i], page);
             if (!blank) {
-                categoryInfo = await this.getTableCategoryInfo(rowHandles[i], page);
+                if (!date) {
+                    date = this.extractScheduleDateFromRow(rowHandles[i], page);
+                } else {
+                    categoryInfo = await this.getTableCategoryInfo(rowHandles[i], page);
+                }
             }
             i++;
         }
@@ -90,11 +97,12 @@ export class OrganizedTypeTwo {
                 continue;
             }
             let rowData = await this.getRowInfo(rowHandles[i], categoryInfo, page);
+
             data.push(rowData);
         }
         const sched = new ScheduleOfInvestments(title, date, categoryInfo.getCategories(), data);
         // console.log('\n\nDATA:\n', data[0].get('note'), '\n\n');
-        // console.log(sched.toCsv());
+        console.log(sched.toCsv());
         return sched;
     }
 
@@ -126,14 +134,13 @@ export class OrganizedTypeTwo {
         for (let i = 0; i < categoryInfo.getIndices().length; i++) {
             let currentHandle = tdHandles[categoryInfo.indexAt(i)];
             // let str = '\x1b[33mBLANK\x1b[39m';
-            let str = '';
-            try {
-                str = await page.evaluate(
-                    (handle) => handle.querySelector('span').textContent,
-                    currentHandle,
-                );
-            } catch (e) { }
-            if (str.length > 0) {
+            let str = await this.parseTd(currentHandle);
+            // Sometimes a $ is stored where the info should be, and the data is stored
+            // in the neighbor td
+            if (str == '$') {
+                currentHandle = tdHandles[categoryInfo.indexAt(i) + 1];
+            }
+            if (str) {
                 // Info was found in the cell
                 // console.log(`Info found: ${str}`);
                 if (!firstText) {
@@ -144,6 +151,7 @@ export class OrganizedTypeTwo {
             }
             // We have to get rid of all commas
             str = str.replace(',', '');
+            str = str.replace('$');
             // Info or not, we add str to the map.
             map.set(
                 categoryInfo.categoryAt(i),
@@ -170,11 +178,8 @@ export class OrganizedTypeTwo {
         const tds = await rowHandle.$$('td');
         for await (const tdHandle of tds) {
             try {
-                const str = await page.evaluate(
-                    (handle) => handle.querySelector('p > font').textContent,
-                    tdHandle,
-                );
-                if (str.length != 0) {
+                const str = await this.parseTd(tdHandle, page);
+                if (!str) {
                     return false;
                 }
             } catch (e) {
@@ -192,6 +197,8 @@ export class OrganizedTypeTwo {
      * "indices" contains the actual indices of the categories.
      */
     async getTableCategoryInfo(rowHandle, page) {
+        // TODO: finish implementing
+        // right now we're looking at the micro variation.
         // Like the title, each category is spread across different rows.
         // One way we can tell it's ended is by an underline
 
@@ -199,7 +206,7 @@ export class OrganizedTypeTwo {
         // That's what it looks like
         // We want to get the style attribute, and check if it contains
         // That string
-        
+
         let bottomBorderDetected = false;
         const tds = await rowHandle.$$('td');
         let categories = new Array();
@@ -222,5 +229,129 @@ export class OrganizedTypeTwo {
             tdIndex++;
         }
         return new CategoryInfo(indices, categories);
+    }
+
+    /**
+     * For the micro variation
+     * @param {ElementHandle} rowHandle 
+     * @param {Page} page
+     * @returns {CategoryInfo}
+     */
+    async getMicrovarCategoryInfo(rowHandle, page) {
+        const tds = await rowHandle.$$('td');
+        let categories = new Array();
+        let indices = new Array();
+        let tdIndex = 0;
+        for await (const tdHandle of tds) {
+            const bHandle = await tdHandle.$('b');
+            let str;
+            try {
+                str = await page.evaluate(
+                    handle => handle.textContent,
+                    bHandle
+                );
+            } catch (e) {
+            }
+            if (str) {
+                indices.push(tdIndex);
+                categories.push(str);
+            }
+            tdIndex++;
+        }
+        return new CategoryInfo(indices, categories);
+    }
+
+    /**
+     * Organized 10Q's that keep the tables and titles
+     * within a div seem to have two micro-variations.
+     * One is text within a p, the other is text within
+     * a p font. This method figures out which one.
+     * @param {ElementHandle} eHandle 
+     * @param {Page} page
+     * @returns {Promise<String>} text content.
+     */
+    async extractText(eHandle, page) {
+        let str;
+        try {
+            str = await page.evaluate(
+                (handle) => handle.querySelector('p').textContent,
+                eHandle,
+            );
+            if (!str) {
+                str = await page.evaluate(
+                    (handle) => handle.querySelector('p > font').textContent,
+                    eHandle,
+                );
+            }
+        } catch (e) {
+            return null;
+        }
+        return str;
+    }
+
+    /**
+     * Same as extract text but for p handles.
+     * @param {ElementHandle} pHandle 
+     * @param {Page} page
+     * @returns {Promise<String>} text content.
+     */
+    async parseP(pHandle, page) {
+        let str;
+        try {
+            str = await page.evaluate(
+                (handle) => handle.textContent,
+                pHandle,
+            );
+            if (!str) {
+                str = await page.evaluate(
+                    (handle) => handle.querySelector('font').textContent,
+                    pHandle,
+                );
+            }
+        } catch (e) {
+            return null;
+        }
+        return str;
+    }
+
+    /**
+     * Extracts the last valid date listed in in a row.
+     * @param {ElementHandle} rowHandle 
+     * @param {Page} page
+     * @returns {Promise<Date>}
+     */
+    async extractScheduleDateFromRow(rowHandle, page) {
+        let tdHandles = await rowHandle.$$('td');
+        let str;
+        for await (const tdHandle of tdHandles) {
+            str = parseTd(tdHandle, page);
+        }
+        if (!str) {
+            return null;
+        }
+        let date = parsingUtility.getDate(str);
+        return date;
+    }
+
+    /**
+     * Extracts text for TD handle of all known variations of Td
+     * @param {ElementHandle} tdHandle 
+     * @param {Page} page 
+     */
+    async parseTd(tdHandle, page) {
+        let str;
+        try {
+            str = await page.evaluate(
+                handle => handle.textContent,
+                tdHandle
+            );
+        } catch (e) { }
+        if (!str) {
+            str = await page.evaluate(
+                handle => handle.querySelector('b').textContent,
+                tdHandle
+            );
+        }
+        return str;
     }
 }
