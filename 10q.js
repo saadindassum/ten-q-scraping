@@ -1,7 +1,9 @@
 import { ElementHandle, Page } from 'puppeteer';
 import { CategoryInfo } from './ten-q-objects.js';
 import { ScheduleOfInvestments } from './ten-q-objects.js';
-import { InvestmentSummary } from './schedule-of-investments.js';
+import { ParsingUtility } from './parsing-utility.js';
+
+var parsingUtility = new ParsingUtility();
 
 export default class TenQUtility {
     constructor() { }
@@ -139,12 +141,7 @@ export default class TenQUtility {
         // We get the date first
         // As a safety, if we fail to retrieve the date
         // We'll add the current date/time.
-        let date;
-        // console.log(`Date string: ${dateString}`);
-        try {
-            dateString += 'Z';
-            date = new Date(Date.parse(dateString));
-        } catch (e) { }
+        let date = parsingUtility.getDate(dateString);
         // console.log(`Date: ${date.toUTCString()}`);
 
         let tableInfo = new Map();
@@ -251,7 +248,7 @@ export default class TenQUtility {
     }
 
     /**
-     * Parses through a table and retrieves all categories.
+     * Parses through a table and retrieves all text.
      * @param {ElementHandle} rowHandle 
      * @param {CategoryInfo} categoryInfo 
      * @param {Page} page 
