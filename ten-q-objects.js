@@ -16,7 +16,7 @@ export class CategoryInfo {
         this.map.set('categories', categories);
         this.map.set('indices', indices);
     }
-    
+
     /**
      * @returns {Number[]} An array of indices which have a category
      */
@@ -39,7 +39,7 @@ export class CategoryInfo {
     getCategories() {
         return this.map.get('categories');
     }
-    
+
     /**
      * 
      * @param {Number} i 
@@ -101,7 +101,7 @@ export class ScheduleOfInvestments {
                 let maybeDate = new Date(Date.parse(dateString));
                 maybeDate = maybeDate.toUTCString();
                 datesEqual = maybeDate === this.date.toUTCString();
-            } catch (e) {}
+            } catch (e) { }
             if (!datesEqual) {
                 if (str && bit != splitTitle[splitTitle.length - 1]) {
                     // If string not empty
@@ -115,7 +115,7 @@ export class ScheduleOfInvestments {
             }
         }
         str += ','
-        
+
         str += this.date.toISOString();
         str += '\n';
 
@@ -207,7 +207,7 @@ export class TenQDoc {
     constructor(fileDate, schedules, link) {
         this.fileDate = fileDate;
         this.schedules = schedules;
-        if (schedules.length != 0) {
+        if (schedules) {
             console.log(schedules);
         }
         this.link = link;

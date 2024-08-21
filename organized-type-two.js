@@ -12,14 +12,40 @@ export class OrganizedTypeTwo {
     constructor() { }
 
     /**
+         * 
+         * @param {Page} page the page we're parsing
+         * @returns {Promise<ScheduleOfInvestments[]>} all the SOI's found in the page.
+         */
+    async parseDocument(page) {
+        // This will get all our tables.
+        const divs = await page.$$('body > document > type > sequence > filename > description > text > div');
+        console.log(`Divs found: ${divs.length}`);
+        if (divs.length === 0) {
+            console.log(`%cNO DIVS FOUND`, 'color: yellow;');
+            return null;
+        }
+        console.log(`${divs.length} div(s) found. Adding all schedules`);
+
+        let scheduleList = new Array();
+
+        for await (const divHandle of divs) {
+            let sched = await this.parseDiv(divHandle, page);
+            if (sched) {
+                scheduleList.push(sched);
+            }
+        }
+
+        return scheduleList;
+    }
+
+    /**
      * For 10Qs where the table titles are in a div
      * @param {ElementHandle} divHandle
      * @param {Page} page
      * @returns {Promise<ScheduleOfInvestments>}
      */
     async parseDiv(divHandle, page) {
-        console.log('Parsing div!');
-        const pHandles = divHandle.$$('p > font');
+        const pHandles = await divHandle.$$('p > font');
 
         // We get the title, we check if it's a schedule
         let title = '';
@@ -39,12 +65,12 @@ export class OrganizedTypeTwo {
                 break;
             }
         }
-
+        console.log('TITLE: ', title);
         const lcTitle = title.toLowerCase();
         if (!lcTitle.includes('schedule of')) {
             return null;
         }
-
+        console.log('FOUND SCHEDULE!');
         console.log(`%c ${title}`, 'color: green;');
 
         let date = parsingUtility.getDate();
@@ -53,6 +79,8 @@ export class OrganizedTypeTwo {
         const tableHandle = divHandle.$$('div > table');
         let data = await this.parseTable(tableHandle, page);
         data.set('title', title);
+
+        return data;
     }
 
     /**
@@ -302,15 +330,18 @@ export class OrganizedTypeTwo {
                 (handle) => handle.textContent,
                 pHandle,
             );
+            console.log(str);
             if (!str) {
                 str = await page.evaluate(
                     (handle) => handle.querySelector('font').textContent,
                     pHandle,
                 );
+                console.log(str);
             }
         } catch (e) {
             return null;
         }
+        console.log('parsed string: ', str);
         return str;
     }
 
@@ -324,7 +355,7 @@ export class OrganizedTypeTwo {
         let tdHandles = await rowHandle.$$('td');
         let str;
         for await (const tdHandle of tdHandles) {
-            str = parseTd(tdHandle, page);
+            str = await parseTd(tdHandle, page);
         }
         if (!str) {
             return null;

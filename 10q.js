@@ -2,6 +2,7 @@ import { ElementHandle, Page } from 'puppeteer';
 import { CategoryInfo } from './ten-q-objects.js';
 import { ScheduleOfInvestments } from './ten-q-objects.js';
 import { ParsingUtility } from './parsing-utility.js';
+import { OrganizedTypeTwo } from './organized-type-two.js';
 
 var parsingUtility = new ParsingUtility();
 
@@ -24,7 +25,12 @@ export default class TenQUtility {
         // 1. Try parsing as organized HTM
         // 2. If that fails, we parse as text document.
 
-        const htmResults = await this.parseHtm(page);
+        let typeTwo = new OrganizedTypeTwo();
+
+        let htmResults = await typeTwo.parseDocument(page);
+        if (htmResults === null || htmResults.length == 0) {
+            htmResults = this.parseHtm(page);
+        }
         if (htmResults === null || htmResults.length == 0) {
             // console.log(`%cNO RESULTS FOUND IN LINK ${link}`, 'color: red;');
             return [];
