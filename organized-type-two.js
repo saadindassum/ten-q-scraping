@@ -45,7 +45,7 @@ export class OrganizedTypeTwo {
      * @returns {Promise<ScheduleOfInvestments>}
      */
     async parseDiv(divHandle, page) {
-        const pHandles = await divHandle.$$('p > font');
+        const pHandles = await divHandle.$$('p');
 
         // We get the title, we check if it's a schedule
         let title = '';
@@ -56,7 +56,7 @@ export class OrganizedTypeTwo {
         for (const pHandle of pHandles) {
             try {
                 const str = await this.parseP(pHandle, page);
-                if (str) {
+                if (str && str.length > 0) {
                     title += str;
                     //Because the date always comes last.
                     dateString = str;
@@ -65,21 +65,20 @@ export class OrganizedTypeTwo {
                 break;
             }
         }
-        console.log('TITLE: ', title);
         const lcTitle = title.toLowerCase();
         if (!lcTitle.includes('schedule of')) {
             return null;
         }
-        console.log('FOUND SCHEDULE!');
         console.log(`%c ${title}`, 'color: green;');
 
         let date = parsingUtility.getDate();
 
         // Table is inside yet another div
-        const tableHandle = divHandle.$$('div > table');
-        let data = await this.parseTable(tableHandle, page);
-        data.set('title', title);
-
+        const tableHandle = await divHandle.$('div > table');
+        let data = await this.parseTable(tableHandle, title, date, page);
+        if (!data.get('title')) {
+            data.set('title', title);
+        }
         return data;
     }
 
@@ -93,7 +92,6 @@ export class OrganizedTypeTwo {
     */
     async parseTable(tableHandle, title, date, page) {
         // Tells us whether we're dealing with the known microvariation
-        let microvar = (date == null);
         let i = 0;
         const rows = await tableHandle.$$('tr');
         let rowHandles = new Array();
@@ -107,14 +105,15 @@ export class OrganizedTypeTwo {
 
         let tableInfo = new Map();
         let categoryInfo = null;
-        while ((!categoryInfo || !date) && i < rowHandles.length) {
+        while ((categoryInfo == null || date == null) && i < rowHandles.length) {
             const blank = await this.rowBlank(rowHandles[i], page);
             if (!blank) {
-                if (!date) {
+                if (date == null) {
                     date = this.extractScheduleDateFromRow(rowHandles[i], page);
                 } else {
                     categoryInfo = await this.getTableCategoryInfo(rowHandles[i], page);
                 }
+            } else {
             }
             i++;
         }
@@ -162,7 +161,7 @@ export class OrganizedTypeTwo {
         for (let i = 0; i < categoryInfo.getIndices().length; i++) {
             let currentHandle = tdHandles[categoryInfo.indexAt(i)];
             // let str = '\x1b[33mBLANK\x1b[39m';
-            let str = await this.parseTd(currentHandle);
+            let str = await this.parseTd(currentHandle, page);
             // Sometimes a $ is stored where the info should be, and the data is stored
             // in the neighbor td
             if (str == '$') {
@@ -206,12 +205,18 @@ export class OrganizedTypeTwo {
         const tds = await rowHandle.$$('td');
         for await (const tdHandle of tds) {
             try {
-                const str = await this.parseTd(tdHandle, page);
-                if (!str) {
+                let str = await this.parseTd(tdHandle, page);
+                if (str != null) {
+                    str = str.replace(' ', '');
+                }
+                console.log('BLANK CHECK:');
+                if (str != null && str.length != 0) {
+                    console.log('%c NOT BLANK', 'color: green;');
                     return false;
+                } else {
+                    print('%c BLANK', 'color: orange;');
                 }
             } catch (e) {
-                // console.log('ERROR: ', e);
             }
         }
         return true;
@@ -225,6 +230,7 @@ export class OrganizedTypeTwo {
      * "indices" contains the actual indices of the categories.
      */
     async getTableCategoryInfo(rowHandle, page) {
+        // console.log('%c GETTING CATEGORY INFO', 'color: yellow;');
         // TODO: finish implementing
         // right now we're looking at the micro variation.
         // Like the title, each category is spread across different rows.
@@ -330,18 +336,18 @@ export class OrganizedTypeTwo {
                 (handle) => handle.textContent,
                 pHandle,
             );
-            console.log(str);
             if (!str) {
                 str = await page.evaluate(
                     (handle) => handle.querySelector('font').textContent,
                     pHandle,
                 );
-                console.log(str);
             }
         } catch (e) {
             return null;
         }
-        console.log('parsed string: ', str);
+        if (str == '&nbsp;') {
+            return '';
+        }
         return str;
     }
 
@@ -355,7 +361,7 @@ export class OrganizedTypeTwo {
         let tdHandles = await rowHandle.$$('td');
         let str;
         for await (const tdHandle of tdHandles) {
-            str = await parseTd(tdHandle, page);
+            str = await this.parseTd(tdHandle, page);
         }
         if (!str) {
             return null;
@@ -368,20 +374,40 @@ export class OrganizedTypeTwo {
      * Extracts text for TD handle of all known variations of Td
      * @param {ElementHandle} tdHandle 
      * @param {Page} page 
+     * @returns {Promise<String>}
      */
     async parseTd(tdHandle, page) {
-        let str;
+        let str = '';
         try {
             str = await page.evaluate(
                 handle => handle.textContent,
                 tdHandle
             );
         } catch (e) { }
-        if (!str) {
-            str = await page.evaluate(
-                handle => handle.querySelector('b').textContent,
-                tdHandle
-            );
+        if (str.length == 0 || str == null) {
+            // console.log('%c trying micro variation', 'color: yellow;');
+            let bHandle = await tdHandle.$('b');
+            if (bHandle != null) {
+                console.log('BHANDLE FOUND');
+                try {
+                    str = await page.evaluate(
+                        handle => handle.textContent,
+                        bHandle
+                    );
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+        }
+        let noSpace = str;
+        noSpace.replace(/\W/g, '');
+        console.log(`NOSPACE:${noSpace}`);
+        if (noSpace === '' || noSpace === ' ') {
+            console.error('NBSP FOUND');
+            return '';
+        }
+        if (str.length != 0) {
+            console.log(`%c Parsed: ${str}`, 'color: orange;');
         }
         return str;
     }
