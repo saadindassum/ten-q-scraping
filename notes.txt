@@ -1,0 +1,10 @@
+I'm thinking we can tell apart variations by their links.
+But hey, that's just a theory.
+A 10Q Scraping theory.
+
+Type 2, microvar 0 links
+https://www.sec.gov/Archives/edgar/data/17313/000001731316000023/cswc-20160930x10q.htm
+
+Type 2, microvar 1 links
+https://www.sec.gov/Archives/edgar/data/1200934/000095013304001965/w97336e10vq.htm
+https://www.sec.gov/Archives/edgar/data/1200934/000095013304003204/w00243e10vq.htm

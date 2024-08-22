@@ -155,7 +155,7 @@ export class OrganizedTypeTwo {
      * @returns {Promise<Map<String, String>>}
      */
     async getRowInfo(rowHandle, categoryInfo, page) {
-        console.log(categoryInfo.getCategories())
+        // console.log(categoryInfo.getCategories());
         let map = new Map();
         // This will help us see if the row stores a note and nothing else
         // If it does, we want to return a single key/value.
@@ -186,13 +186,13 @@ export class OrganizedTypeTwo {
             }
             let str = await this.parseTd(currentHandle, page);
 
-            console.log(`%c ${categoryInfo.indexAt(i)}: ${str}`, 'color: orange;');
+            // console.log(`%c ${categoryInfo.indexAt(i)}: ${str}`, 'color: orange;');
             // Sometimes a $ is stored where the info should be, and the data is stored
             // in the neighbor td
             if (str === '$' ) {
                 // Every $ adds an extra td, so we're going to remove
                 // that td from our array, then go back.
-                console.error('$ DETECTED');
+                // console.error('$ DETECTED');
                 tdHandles.splice(i, 1);
                 i--;
                 continue;
@@ -212,10 +212,10 @@ export class OrganizedTypeTwo {
                             // Or three blanks in a row at a td where
                             // data is supposed to be.
                             // We're supposed to land in the middle one.
-                            console.error('SPSP$ DETECTED');
+                            // console.error('SPSP$ DETECTED');
                             tdHandles.splice(i - 1, 2);
                         } else {
-                            console.error('BLBL DETECTED');
+                            // console.error('BLBL DETECTED');
                             // Pattern: two blanks in a row
                             // where data is supposed to be.
                             tdHandles.splice(i, 1);
@@ -252,7 +252,6 @@ export class OrganizedTypeTwo {
             map = new Map();
             map.set('note', firstText);
         }
-        console.log('ROW DONE!');
         return map;
     }
 
