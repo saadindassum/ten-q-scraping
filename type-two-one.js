@@ -6,9 +6,9 @@ import { ParsingUtility } from './parsing-utility.js';
 var parsingUtility = new ParsingUtility();
 
 /**
- * For parsing 10Qs where tables are wrapped in divs
+ * Type Two, microvariation one
  */
-export class OrganizedTypeTwo {
+export class TypeTwoOne {
     constructor() { }
 
     /**
