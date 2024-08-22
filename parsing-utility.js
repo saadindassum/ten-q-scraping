@@ -27,4 +27,13 @@ export class ParsingUtility {
         let result = rawString.replace(',', '');
         return result;
     }
+
+    /**
+     * 
+     * @param {String} rawString 
+     * @returns 
+     */
+    removeNonAlphanumeric(rawString) {
+        return rawString.replace(/[^a-zA-Z0-9]/g, '');
+    };
 }

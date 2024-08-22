@@ -19,12 +19,12 @@ export class OrganizedTypeTwo {
     async parseDocument(page) {
         // This will get all our tables.
         const divs = await page.$$('body > document > type > sequence > filename > description > text > div');
-        console.log(`Divs found: ${divs.length}`);
+        // console.log(`Divs found: ${divs.length}`);
         if (divs.length === 0) {
             console.log(`%cNO DIVS FOUND`, 'color: yellow;');
             return null;
         }
-        console.log(`${divs.length} div(s) found. Adding all schedules`);
+        // console.log(`${divs.length} div(s) found. Adding all schedules`);
 
         let scheduleList = new Array();
 
@@ -56,7 +56,11 @@ export class OrganizedTypeTwo {
         for (const pHandle of pHandles) {
             try {
                 const str = await this.parseP(pHandle, page);
-                if (str && str.length > 0) {
+                let noSpace = '';
+                if (str) {
+                    noSpace = parsingUtility.removeNonAlphanumeric(str);
+                }
+                if (noSpace.length > 0) {
                     title += str;
                     //Because the date always comes last.
                     dateString = str;
@@ -65,21 +69,23 @@ export class OrganizedTypeTwo {
                 break;
             }
         }
+
         const lcTitle = title.toLowerCase();
-        if (!lcTitle.includes('schedule of')) {
+        if (!lcTitle.includes('schedule of') || title.length > 750) {
             return null;
         }
-        console.log(`%c ${title}`, 'color: green;');
+        // console.log(title);
+        // console.log(`%c TITLE LENGTH: ${title.length}`, 'color: orange;');
 
         let date = parsingUtility.getDate();
 
         // Table is inside yet another div
         const tableHandle = await divHandle.$('div > table');
-        let data = await this.parseTable(tableHandle, title, date, page);
-        if (!data.get('title')) {
-            data.set('title', title);
+        if (tableHandle == null) {
+            return null;
         }
-        return data;
+        let schedule = await this.parseTable(tableHandle, title, date, page);
+        return schedule;
     }
 
     /**
@@ -88,7 +94,7 @@ export class OrganizedTypeTwo {
     * @param {ElementHandle} tableHandle
     * @param {Date} date
     * @param {Page} page
-    * @returns {Promise<Map<String, String>>} or null.
+    * @returns {Promise<ScheduleOfInvestments>} or null.
     */
     async parseTable(tableHandle, title, date, page) {
         // Tells us whether we're dealing with the known microvariation
@@ -104,16 +110,22 @@ export class OrganizedTypeTwo {
         // We must account for that.
 
         let tableInfo = new Map();
-        let categoryInfo = null;
-        while ((categoryInfo == null || date == null) && i < rowHandles.length) {
+        let categoryInfo;
+        // console.log('HANDING DATE AND CATEGORY');
+        // console.log('Category Info:', categoryInfo);
+        // console.log('Date:', date.toString());
+        while ((categoryInfo == null || date.toString() == 'Invalid Date') && i < rowHandles.length) {
             const blank = await this.rowBlank(rowHandles[i], page);
             if (!blank) {
-                if (date == null) {
-                    date = this.extractScheduleDateFromRow(rowHandles[i], page);
+                if (date.toString() == 'Invalid Date') {
+                    let potentialDate = await this.extractScheduleDateFromRow(rowHandles[i], page);
+                    if (potentialDate.toString() != 'Invalid Date') {
+                        // console.log(`%c ${potentialDate.toISOString()}`, 'color: violet;');
+                        date = await this.extractScheduleDateFromRow(rowHandles[i], page);
+                    }
                 } else {
                     categoryInfo = await this.getTableCategoryInfo(rowHandles[i], page);
                 }
-            } else {
             }
             i++;
         }
@@ -127,9 +139,11 @@ export class OrganizedTypeTwo {
 
             data.push(rowData);
         }
+        // console.log(`%c GOT TO BOTTOM`, 'color: orange;');
+        // console.log(`%c ${date.toISOString()}`, 'color: orange;');
         const sched = new ScheduleOfInvestments(title, date, categoryInfo.getCategories(), data);
         // console.log('\n\nDATA:\n', data[0].get('note'), '\n\n');
-        console.log(sched.toCsv());
+        // console.log(sched.toCsv());
         return sched;
     }
 
@@ -141,6 +155,7 @@ export class OrganizedTypeTwo {
      * @returns {Promise<Map<String, String>>}
      */
     async getRowInfo(rowHandle, categoryInfo, page) {
+        console.log(categoryInfo.getCategories())
         let map = new Map();
         // This will help us see if the row stores a note and nothing else
         // If it does, we want to return a single key/value.
@@ -158,14 +173,59 @@ export class OrganizedTypeTwo {
 
         // Since we have the indices of every category, we're going
         // to iterate using those.
+        // console.log(`%c ${categoryInfo.getIndices()}`, 'color: yellow;');
         for (let i = 0; i < categoryInfo.getIndices().length; i++) {
             let currentHandle = tdHandles[categoryInfo.indexAt(i)];
             // let str = '\x1b[33mBLANK\x1b[39m';
+            if (currentHandle == null) {
+                map.set(
+                    categoryInfo.categoryAt(i),
+                    ''
+                );
+                break;
+            }
             let str = await this.parseTd(currentHandle, page);
+
+            console.log(`%c ${categoryInfo.indexAt(i)}: ${str}`, 'color: orange;');
             // Sometimes a $ is stored where the info should be, and the data is stored
             // in the neighbor td
-            if (str == '$') {
-                currentHandle = tdHandles[categoryInfo.indexAt(i) + 1];
+            if (str === '$' ) {
+                // Every $ adds an extra td, so we're going to remove
+                // that td from our array, then go back.
+                console.error('$ DETECTED');
+                tdHandles.splice(i, 1);
+                i--;
+                continue;
+            }
+            if (str.length == 0 && i > 1) {
+                // Patterns I'm accounting for here
+                // tend to pop up after the second category
+                // for this microvar
+                try {
+                    const prevHandle = tdHandles[categoryInfo.indexAt(i) - 1];
+                    const nextHandle = tdHandles[categoryInfo.indexAt(i) + 1];
+                    const prev = await this.parseTd(prevHandle, page);
+                    const next = await this.parseTd(nextHandle, page);
+                    if (prev === '') {
+                        if (next === '$' || next === ' ') {
+                            // Pattern: two blanks then dollar
+                            // Or three blanks in a row at a td where
+                            // data is supposed to be.
+                            // We're supposed to land in the middle one.
+                            console.error('SPSP$ DETECTED');
+                            tdHandles.splice(i - 1, 2);
+                        } else {
+                            console.error('BLBL DETECTED');
+                            // Pattern: two blanks in a row
+                            // where data is supposed to be.
+                            tdHandles.splice(i, 1);
+                        }
+                        i--;
+                        continue;
+                    }
+                } catch (e) {
+                    // console.error(e);
+                }
             }
             if (str) {
                 // Info was found in the cell
@@ -178,7 +238,7 @@ export class OrganizedTypeTwo {
             }
             // We have to get rid of all commas
             str = str.replace(',', '');
-            str = str.replace('$');
+            str = str.replace('$', '');
             // Info or not, we add str to the map.
             map.set(
                 categoryInfo.categoryAt(i),
@@ -192,7 +252,7 @@ export class OrganizedTypeTwo {
             map = new Map();
             map.set('note', firstText);
         }
-        // console.log(map);
+        console.log('ROW DONE!');
         return map;
     }
 
@@ -206,15 +266,12 @@ export class OrganizedTypeTwo {
         for await (const tdHandle of tds) {
             try {
                 let str = await this.parseTd(tdHandle, page);
-                if (str != null) {
-                    str = str.replace(' ', '');
-                }
-                console.log('BLANK CHECK:');
+                // console.log(`BLANK CHECK: \'${str}\'`);
                 if (str != null && str.length != 0) {
-                    console.log('%c NOT BLANK', 'color: green;');
+                    // console.log('%c NOT BLANK', 'color: green;');
                     return false;
                 } else {
-                    print('%c BLANK', 'color: orange;');
+                    // console.log('%c BLANK', 'color: orange;');
                 }
             } catch (e) {
             }
@@ -230,16 +287,10 @@ export class OrganizedTypeTwo {
      * "indices" contains the actual indices of the categories.
      */
     async getTableCategoryInfo(rowHandle, page) {
-        // console.log('%c GETTING CATEGORY INFO', 'color: yellow;');
         // TODO: finish implementing
         // right now we're looking at the micro variation.
         // Like the title, each category is spread across different rows.
         // One way we can tell it's ended is by an underline
-
-        // border-bottom:1pt solid #000000
-        // That's what it looks like
-        // We want to get the style attribute, and check if it contains
-        // That string
 
         let bottomBorderDetected = false;
         const tds = await rowHandle.$$('td');
@@ -247,15 +298,7 @@ export class OrganizedTypeTwo {
         let indices = new Array();
         let tdIndex = 0;
         for await (const tdHandle of tds) {
-            const spanHandle = await tdHandle.$('p > font');
-            let str = '';
-            try {
-                str = await page.evaluate(
-                    handle => handle.textContent,
-                    spanHandle
-                );
-            } catch (e) {
-            }
+            let str = await this.parseTd(tdHandle, page);
             if (str.length != 0) {
                 indices.push(tdIndex);
                 categories.push(str);
@@ -358,15 +401,21 @@ export class OrganizedTypeTwo {
      * @returns {Promise<Date>}
      */
     async extractScheduleDateFromRow(rowHandle, page) {
+        // console.log('%c EXTRACTING DATE FROM ROW', 'color: yellow;');
         let tdHandles = await rowHandle.$$('td');
         let str;
         for await (const tdHandle of tdHandles) {
-            str = await this.parseTd(tdHandle, page);
+            const newStr = await this.parseTd(tdHandle, page);
+            // console.log(newStr);
+            if (newStr.length > 0) {
+                str = newStr;
+            }
         }
-        if (!str) {
+        if (str.length == 0) {
             return null;
         }
         let date = parsingUtility.getDate(str);
+        // console.log(`%c RESULT DATE: ${date.toISOString()}`, 'color: yellow;');
         return date;
     }
 
@@ -388,7 +437,6 @@ export class OrganizedTypeTwo {
             // console.log('%c trying micro variation', 'color: yellow;');
             let bHandle = await tdHandle.$('b');
             if (bHandle != null) {
-                console.log('BHANDLE FOUND');
                 try {
                     str = await page.evaluate(
                         handle => handle.textContent,
@@ -399,15 +447,16 @@ export class OrganizedTypeTwo {
                 }
             }
         }
-        let noSpace = str;
-        noSpace.replace(/\W/g, '');
-        console.log(`NOSPACE:${noSpace}`);
-        if (noSpace === '' || noSpace === ' ') {
-            console.error('NBSP FOUND');
-            return '';
+        if (str === '$') {
+            // In this case we don't want to strip it of alphanumerics
+            // We want to detect it. Let's return it.
+            return str;
         }
-        if (str.length != 0) {
-            console.log(`%c Parsed: ${str}`, 'color: orange;');
+        let noSpace = str;
+        noSpace = parsingUtility.removeNonAlphanumeric(noSpace);
+        // console.log(`NOSPACE:${noSpace}\nlength: ${noSpace.length}`);
+        if (noSpace.length == 0) {
+            return noSpace;
         }
         return str;
     }
