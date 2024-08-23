@@ -2,8 +2,10 @@ import { ElementHandle, Page } from 'puppeteer';
 import { CategoryInfo } from './ten-q-objects.js';
 import { ScheduleOfInvestments } from './ten-q-objects.js';
 import { ParsingUtility } from './parsing-utility.js';
+import { TypeTwoOne } from './type-two-one.js'
 
 var parsingUtility = new ParsingUtility();
+var tto = new TypeTwoOne();
 
 /**
  * Type Two, microvariation one
@@ -17,6 +19,7 @@ export class TypeTwoZero {
          * @returns {Promise<ScheduleOfInvestments[]>} all the SOI's found in the page.
          */
     async parseDocument(page) {
+        console.log('Trying type 2.0');
         // This will get all our tables.
         let divs = await page.$$('body > div');
         // console.log(`Divs found: ${divs.length}`);
@@ -31,11 +34,16 @@ export class TypeTwoZero {
 
         let scheduleList = new Array();
 
-        for await (const divHandle of divs) {
-            let sched = await this.parseDiv(divHandle, page);
-            if (sched) {
-                scheduleList.push(sched);
+        try {
+            for await (const divHandle of divs) {
+                let sched = await this.parseDiv(divHandle, page);
+                if (sched) {
+                    scheduleList.push(sched);
+                }
             }
+        } catch (e) {
+            let sched = await tto.parseDocument(page);
+            return sched;
         }
 
         return scheduleList;

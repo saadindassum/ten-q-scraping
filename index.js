@@ -29,18 +29,20 @@ async function main() {
 
   await initCluster(cluster);
 
-  // for (var i = 0; i < searches.length; i++) {
-  //   let cik = searches[i];
-  //   //If we don't do this, we won't get any hits on EDGAR
-  //   while (cik.length < 10) {
-  //     cik = '0' + cik;
-  //   }
-  //   cluster.queue(cik);
-  // }
+  for (var i = 0; i < searches.length; i++) {
+    let cik = searches[i];
+    //If we don't do this, we won't get any hits on EDGAR
+    while (cik.length < 10) {
+      cik = '0' + cik;
+    }
+    cluster.queue(cik);
+  }
+
+  // These have worked in the past
+  // cluster.queue('0000017313');
 
   // These ones always get errors:
   // cluster.queue('0001383414');
-  cluster.queue('0000017313');
   // cluster.queue('0001200934');
 
 

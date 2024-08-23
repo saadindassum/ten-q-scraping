@@ -1,6 +1,9 @@
 import { ElementHandle, Page } from 'puppeteer';
 import { CategoryInfo } from './ten-q-objects.js';
 import { ScheduleOfInvestments } from './ten-q-objects.js';
+import { ParsingUtility } from './parsing-utility.js';
+
+var parsingUtility = new ParsingUtility();
 
 export class TypeOne {
     constructor () {
@@ -11,6 +14,7 @@ export class TypeOne {
      * @returns {Promise<ScheduleOfInvestments[]>} all the SOI's found in the page.
      */
     async parseHtm(page) {
+        console.log('Trying type 1.0');
         // This will get all our tables.
         const tables = await page.$$('body > div > table > tbody');
         // console.log(`Tables found: ${tables.length}`);
@@ -28,7 +32,7 @@ export class TypeOne {
                 tableInfo = await this.parseTable(tableHandle, page);
             } catch (e) {
                 console.log('%c error caught while parsing table');
-                console.log(tableHandle);
+                console.error(e);
                 tableInfo = new ScheduleOfInvestments(
                     'ERROR TABLE',
                     new Date(Date.now()),
@@ -264,6 +268,7 @@ export class TypeOne {
             }
             // We have to get rid of all commas
             str = str.replace(',', '');
+            str = str.replace('$', '');
             // Info or not, we add str to the map.
             map.set(
                 categoryInfo.categoryAt(i),

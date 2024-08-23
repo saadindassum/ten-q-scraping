@@ -12,11 +12,12 @@ export class TypeTwoOne {
     constructor() { }
 
     /**
-         * 
-         * @param {Page} page the page we're parsing
-         * @returns {Promise<ScheduleOfInvestments[]>} all the SOI's found in the page.
-         */
+    * 
+    * @param {Page} page the page we're parsing
+    * @returns {Promise<ScheduleOfInvestments[]>} all the SOI's found in the page.
+    */
     async parseDocument(page) {
+        console.log('Trying type 2.1');
         // This will get all our tables.
         const divs = await page.$$('body > document > type > sequence > filename > description > text > div');
         // console.log(`Divs found: ${divs.length}`);

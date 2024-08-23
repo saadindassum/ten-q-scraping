@@ -49,7 +49,7 @@ export class ParsingUtility {
     async rowHasUnderlines(rowHandle, page) {
         // Border seems to be on the TD's;
         // border-bottom:1pt solid
-        let tdHandles = rowHandle.$$('td');
+        let tdHandles = await rowHandle.$$('td');
         for await (const td of tdHandles) {
             let styleString = await td.getProperty('href');
             if (styleString.contains('border-bottom:1pt solid')) {
