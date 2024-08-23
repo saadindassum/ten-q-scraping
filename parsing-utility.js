@@ -1,3 +1,5 @@
+import { ElementHandle, Page } from 'puppeteer';
+
 export class ParsingUtility {
     constructor() { }
 
@@ -36,4 +38,24 @@ export class ParsingUtility {
     removeNonAlphanumeric(rawString) {
         return rawString.replace(/[^a-zA-Z0-9]/g, '');
     };
+
+    /**
+     * Returns true if any underlines are detected
+     * in the TD's of a row handle.
+     * @param {ElementHandle} rowHandle 
+     * @param {Page} page 
+     * @returns {Promise<Boolean>}
+     */
+    async rowHasUnderlines(rowHandle, page) {
+        // Border seems to be on the TD's;
+        // border-bottom:1pt solid
+        let tdHandles = rowHandle.$$('td');
+        for await (const td of tdHandles) {
+            let styleString = await td.getProperty('href');
+            if (styleString.contains('border-bottom:1pt solid')) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

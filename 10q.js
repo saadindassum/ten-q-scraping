@@ -1,6 +1,8 @@
 import { Page } from 'puppeteer';
 import { ScheduleOfInvestments } from './ten-q-objects.js';
 import { TypeTwoOne } from './type-two-one.js';
+import { TypeTwoZero } from './type-two-zero.js';
+import { TypeOne } from './type-one.js';
 
 /**
  * A class which will handle choosing which variation to try parsing with.
@@ -27,14 +29,17 @@ export default class TenQUtility {
         // 1. Try parsing as organized HTM
         // 2. If that fails, we parse as text document.
 
-        let typeTwo = new TypeTwoOne();
+        let typeOne = new TypeOne();
+        let typeTwoZero = new TypeTwoZero();
+        let typeTwoOne = new TypeTwoOne();
 
-        let htmResults = await typeTwo.parseDocument(page);
+        let htmResults = await typeTwoZero.parseDocument(page);
+        console.log(htmResults);
         if (htmResults === null || htmResults.length == 0) {
-            htmResults = this.parseHtm(page);
+            htmResults = await typeOne.parseHtm(page);
         }
         if (htmResults === null || htmResults.length == 0) {
-            // console.log(`%cNO RESULTS FOUND IN LINK ${link}`, 'color: red;');
+            console.log(`%cNO RESULTS FOUND IN LINK ${link}`, 'color: red;');
             return [];
         }
         // console.log(`%c ${htmResults}`, 'color: orange');

@@ -40,8 +40,8 @@ async function main() {
 
   // These ones always get errors:
   // cluster.queue('0001383414');
-  // cluster.queue('0000017313');
-  cluster.queue('0001200934');
+  cluster.queue('0000017313');
+  // cluster.queue('0001200934');
 
 
   await cluster.idle();

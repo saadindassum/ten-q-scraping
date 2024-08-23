@@ -48,6 +48,12 @@ export class CategoryInfo {
     categoryAt(i) {
         return this.map.get('categories')[i];
     }
+
+    setCategoryAt(i, value) {
+        let catArray = this.map.get('categories');
+        catArray[i] = value;
+        this.map.set('categories', catArray);
+    }
 }
 
 /**
