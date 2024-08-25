@@ -1,4 +1,4 @@
-import puppeteer, { Browser, Page } from 'puppeteer';
+import puppeteer, { Page } from 'puppeteer';
 import { Cluster } from 'puppeteer-cluster';
 import { TenQDoc } from './ten-q-objects.js';
 import { TenQCollection } from './ten-q-objects.js';
@@ -62,14 +62,14 @@ async function initCluster(cluster) {
       let outputString = documentCollection.toCsv();
       fs.writeFile(`./output/${cik}.csv`, outputString, err => {
         if (err) {
-          console.error(err);
+          // console.error(err);
         } else {
           // file written successfully
         }
       });
     } catch (e) {
       // console.log(`%c ERROR AT CIK ${cik}`, 'color: red;');
-      console.error(e);
+      // console.error(e);
       let str = '';
       str += e;
       try {
@@ -182,7 +182,7 @@ async function parseEdgarSearch(page, cik) {
     } catch (e) { }
     // We add a delay because this seems to be the most intensive
     // fetch, and where the SEC's most likely to block us.
-    await delay(250);
+    await delay(500);
   }
 
   // And now we have a full list of 10Q links!
@@ -199,7 +199,7 @@ async function parseEdgarSearch(page, cik) {
   // 
 
   await page.close();
-  console.log('Finished CIK ', cik);
+  // console.log('Finished CIK ', cik);
   return new TenQCollection(cik, formList);
 
 }

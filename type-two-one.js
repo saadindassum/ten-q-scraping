@@ -17,12 +17,12 @@ export class TypeTwoOne {
     * @returns {Promise<ScheduleOfInvestments[]>} all the SOI's found in the page.
     */
     async parseDocument(page) {
-        console.log('Trying type 2.1');
+        // console.log('Trying type 2.1');
         // This will get all our tables.
         const divs = await page.$$('body > document > type > sequence > filename > description > text > div');
         // console.log(`Divs found: ${divs.length}`);
         if (divs.length === 0) {
-            console.log(`%cNO DIVS FOUND`, 'color: yellow;');
+            // console.log(`%cNO DIVS FOUND`, 'color: yellow;');
             return null;
         }
         // console.log(`${divs.length} div(s) found. Adding all schedules`);
@@ -190,7 +190,7 @@ export class TypeTwoOne {
             // console.log(`%c ${categoryInfo.indexAt(i)}: ${str}`, 'color: orange;');
             // Sometimes a $ is stored where the info should be, and the data is stored
             // in the neighbor td
-            if (str === '$' ) {
+            if (str === '$') {
                 // Every $ adds an extra td, so we're going to remove
                 // that td from our array, then go back.
                 // console.error('$ DETECTED');

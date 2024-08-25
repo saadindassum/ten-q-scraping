@@ -19,7 +19,7 @@ export default class TenQUtility {
      * @returns {Promise<ScheduleOfInvestments[]>} a list of a schedule of investments.
      */
     async parse10Q(page, link) {
-        console.log(`Parsing link ${link}`);
+        // console.log(`Parsing link ${link}`);
         await page.goto(link, { waitUntil: 'networkidle0' });
 
         // What I figured out here is sometimes we have an organized htm file,
@@ -34,12 +34,12 @@ export default class TenQUtility {
         let typeTwoOne = new TypeTwoOne();
 
         let htmResults = await typeTwoZero.parseDocument(page);
-        console.log(htmResults);
+        // console.log(htmResults);
         if (htmResults === null || htmResults.length == 0) {
             htmResults = await typeOne.parseHtm(page);
         }
         if (htmResults === null || htmResults.length == 0) {
-            console.log(`%cNO RESULTS FOUND IN LINK ${link}`, 'color: red;');
+            // console.log(`%cNO RESULTS FOUND IN LINK ${link}`, 'color: red;');
             return [];
         }
         // console.log(`%c ${htmResults}`, 'color: orange');

@@ -19,7 +19,7 @@ export class TypeTwoZero {
          * @returns {Promise<ScheduleOfInvestments[]>} all the SOI's found in the page.
          */
     async parseDocument(page) {
-        console.log('Trying type 2.0');
+        // console.log('Trying type 2.0');
         // This will get all our tables.
         let divs = await page.$$('body > div');
         // console.log(`Divs found: ${divs.length}`);
@@ -27,10 +27,10 @@ export class TypeTwoZero {
             divs = await page.$$('body > document > type > sequence > filename > description > text > div');
         }
         if (divs.length === 0) {
-            console.log(`%cNO DIVS FOUND`, 'color: yellow;');
+            // console.log(`%cNO DIVS FOUND`, 'color: yellow;');
             return null;
         }
-        console.log(`${divs.length} div(s) found. Adding all schedules`);
+        // console.log(`${divs.length} div(s) found. Adding all schedules`);
 
         let scheduleList = new Array();
 
@@ -89,7 +89,7 @@ export class TypeTwoZero {
         if (!lcTitle.includes('schedule of') || title.length > 750) {
             return null;
         }
-        console.log(title);
+        // console.log(title);
         // console.log(`%c TITLE LENGTH: ${title.length}`, 'color: orange;');
 
         // Table is inside yet another div
@@ -456,7 +456,7 @@ export class TypeTwoZero {
                         bHandle
                     );
                 } catch (e) {
-                    console.error(e);
+                    // console.error(e);
                 }
             }
         }

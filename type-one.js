@@ -6,7 +6,7 @@ import { ParsingUtility } from './parsing-utility.js';
 var parsingUtility = new ParsingUtility();
 
 export class TypeOne {
-    constructor () {
+    constructor() {
     }
     /**
      * 
@@ -14,7 +14,7 @@ export class TypeOne {
      * @returns {Promise<ScheduleOfInvestments[]>} all the SOI's found in the page.
      */
     async parseHtm(page) {
-        console.log('Trying type 1.0');
+        // console.log('Trying type 1.0');
         // This will get all our tables.
         const tables = await page.$$('body > div > table > tbody');
         // console.log(`Tables found: ${tables.length}`);
@@ -31,8 +31,8 @@ export class TypeOne {
             try {
                 tableInfo = await this.parseTable(tableHandle, page);
             } catch (e) {
-                console.log('%c error caught while parsing table');
-                console.error(e);
+                // console.log('%c error caught while parsing table');
+                // console.error(e);
                 tableInfo = new ScheduleOfInvestments(
                     'ERROR TABLE',
                     new Date(Date.now()),
