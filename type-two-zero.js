@@ -19,13 +19,13 @@ export class TypeTwoZero {
          * @returns {Promise<ScheduleOfInvestments[]>} all the SOI's found in the page.
          */
     async parseDocument(page) {
-        // console.log('Trying type 2.0');
+        console.log('Trying type 2.0');
         // This will get all our tables.
         let divs = await page.$$('body > div');
-        // console.log(`Divs found: ${divs.length}`);
-        if (divs.length === 0) {
+        if (divs.length == 0) {
             divs = await page.$$('body > document > type > sequence > filename > description > text > div');
         }
+        console.log(`Divs found: ${divs.length}`);
         if (divs.length === 0) {
             // console.log(`%cNO DIVS FOUND`, 'color: yellow;');
             return null;
@@ -35,13 +35,16 @@ export class TypeTwoZero {
         let scheduleList = new Array();
 
         try {
-            for await (const divHandle of divs) {
+            for await (let divHandle of divs) {
+                divHandle = await page.$('body > document > type > sequence > filename > description > text > div:nth-child(15)');
                 let sched = await this.parseDiv(divHandle, page);
                 if (sched) {
                     scheduleList.push(sched);
                 }
+                break;
             }
         } catch (e) {
+            console.error(e);
             let sched = await tto.parseDocument(page);
             return sched;
         }
@@ -56,8 +59,8 @@ export class TypeTwoZero {
      * @returns {Promise<ScheduleOfInvestments>}
      */
     async parseDiv(divHandle, page) {
-        const pHandles = await divHandle.$$('p');
-
+        const pHandles = await divHandle.$$('div > p');
+        console.log(`phandles found: ${pHandles.length}`);
         // We get the title, we check if it's a schedule
         // For this type, we stop when we hit a date
         let title = '';
@@ -71,26 +74,32 @@ export class TypeTwoZero {
             if (str) {
                 noSpace = parsingUtility.removeNonAlphanumeric(str);
             }
-            if (noSpace.length > 0) {
+            if (noSpace.length > 0 && str !== 'Table of Contents') {
                 title += str;
+                title += '\n';
                 //Because the date always comes last.
                 let dateString = str;
-            }
-            try {
-                let potentialDate = parsingUtility.getDate(dateString);
-                if (potentialDate.toString() != 'Invalid Date') {
-                    date = potentialDate;
+                try {
+                    let potentialDate = parsingUtility.getDate(dateString);
+                    console.log(`%c ToString: ${potentialDate.toString()}`, 'color: orange;');
+                    if (potentialDate.toString() !== 'Invalid Date') {
+                        date = potentialDate;
+                    }
+                } catch (e) { }
+            } else {
+                if (title.length != 0 && str !== 'Table of Contents') {
                     break;
                 }
-            } catch (e) { }
+            }
         }
-
         const lcTitle = title.toLowerCase();
-        if (!lcTitle.includes('schedule of operations') || title.length > 750) {
+        if (!lcTitle.includes('schedule of investments') || title.length > 750) {
+            if (title.length < 750) {
+                console.log(title);
+            }
             return null;
         }
-        // console.log(title);
-        // console.log(`%c TITLE LENGTH: ${title.length}`, 'color: orange;');
+        console.log(`%c TITLE LENGTH: ${title.length}`, 'color: orange;');
 
         // Table is inside yet another div
         const tableHandle = await divHandle.$('div > table');
@@ -133,8 +142,10 @@ export class TypeTwoZero {
                         // C++. Ha.
                         // Concatenation time
                         let catName = categoryInfo.categoryAt(c);
-                        catName += ` ${newCategoryInfo.categoryAt(c)}`
-                        categoryInfo.setCategoryAt(c, catName);
+                        if (catName.length > 0 && newCategoryInfo.categoryAt(c).length != 0) {
+                            catName += ` ${newCategoryInfo.categoryAt(c)}`
+                            categoryInfo.setCategoryAt(c, catName);
+                        }
                     }
                 }
             }
@@ -169,7 +180,9 @@ export class TypeTwoZero {
      * @returns {Promise<Map<String, String>>}
      */
     async getRowInfo(rowHandle, categoryInfo, page) {
+        // console.log('Getting row info!');
         // console.log(categoryInfo.getCategories());
+        // console.log(categoryInfo.getIndices());
         let map = new Map();
         // This will help us see if the row stores a note and nothing else
         // If it does, we want to return a single key/value.
@@ -184,14 +197,15 @@ export class TypeTwoZero {
         for await (const tdHandle of tds) {
             tdHandles.push(tdHandle);
         }
+        // console.log(tdHandles);
 
         // Since we have the indices of every category, we're going
         // to iterate using those.
-        // console.log(`%c ${categoryInfo.getIndices()}`, 'color: yellow;');
         for (let i = 0; i < categoryInfo.getIndices().length; i++) {
             let currentHandle = tdHandles[categoryInfo.indexAt(i)];
-            // let str = '\x1b[33mBLANK\x1b[39m';
             if (currentHandle == null) {
+                console.log(`Index: ${categoryInfo.indexAt(i)}`);
+                console.error('handle null');
                 map.set(
                     categoryInfo.categoryAt(i),
                     ''
@@ -200,21 +214,44 @@ export class TypeTwoZero {
             }
             let str = await this.parseTd(currentHandle, page);
 
-            // console.log(`%c ${categoryInfo.indexAt(i)}: ${str}`, 'color: orange;');
+            console.log(`%c ${categoryInfo.indexAt(i)}: '${str}'`, 'color: orange;');
             // Sometimes a $ is stored where the info should be, and the data is stored
             // in the neighbor td
             if (str === '$') {
                 // Every $ adds an extra td, so we're going to remove
                 // that td from our array, then go back.
-                // console.error('$ DETECTED');
                 tdHandles.splice(i, 1);
                 i--;
+                console.log('%c SPLICED', 'color: orange;');
                 continue;
             }
             if (str.length == 0 && i > 1) {
                 // Patterns I'm accounting for here
                 // tend to pop up after the second category
                 // for this microvar
+                try {
+                    // first variation is more than two blanks in a row.
+                    let blankCount = 1;
+                    let j = i;
+                    for (j; j < categoryInfo.getCategories().length; j++) {
+                        // Once we find the first text, we break, and we leave i at that index.
+                        let jHandle = tdHandles[categoryInfo.indexAt(j)];
+                        console.log(`%c jHandle: ${jHandle}`, 'color: yellow;');
+                        const jText = await this.parseTd(jHandle);
+                        console.log(`jText: '${jText}'`);
+                        if (jText.length != 0) {
+                            // This means wer found text.
+                            break;
+                        }
+                        blankCount++;
+                    }
+                    if (blankCount > 2 && j < categoryInfo.getCategories().length) {
+                        console.log(`%c CONTINUE TO ${j}`, 'color: yellow;');
+                        i = j - 1;
+                        //Takes i straight to the info.
+                        continue;
+                    }
+                } catch (e) { }
                 try {
                     const prevHandle = tdHandles[categoryInfo.indexAt(i) - 1];
                     const nextHandle = tdHandles[categoryInfo.indexAt(i) + 1];
@@ -226,10 +263,8 @@ export class TypeTwoZero {
                             // Or three blanks in a row at a td where
                             // data is supposed to be.
                             // We're supposed to land in the middle one.
-                            // console.error('SPSP$ DETECTED');
                             tdHandles.splice(i - 1, 2);
                         } else {
-                            // console.error('BLBL DETECTED');
                             // Pattern: two blanks in a row
                             // where data is supposed to be.
                             tdHandles.splice(i, 1);
@@ -238,7 +273,6 @@ export class TypeTwoZero {
                         continue;
                     }
                 } catch (e) {
-                    // console.error(e);
                 }
             }
             if (str) {
@@ -266,6 +300,7 @@ export class TypeTwoZero {
             map = new Map();
             map.set('note', firstText);
         }
+        console.log('\n\n\n');
         return map;
     }
 
@@ -300,19 +335,20 @@ export class TypeTwoZero {
      * "indices" contains the actual indices of the categories.
      */
     async getTableCategoryInfo(rowHandle, page) {
-        // TODO: finish implementing
-        // right now we're looking at the micro variation.
         // Like the title, each category is spread across different rows.
         // One way we can tell it's ended is by an underline
-
-        let bottomBorderDetected = false;
         const tds = await rowHandle.$$('td');
         let categories = new Array();
         let indices = new Array();
         let tdIndex = 0;
         for await (const tdHandle of tds) {
             let str = await this.parseTd(tdHandle, page);
-            if (str.length != 0) {
+            // console.log(`str: '${str}'`);
+            str = str.replace('\n', '');
+            // console.log(`rpl: '${str}'`);
+            str = str.replace('    ', '');
+            // console.log(`rps: '${str}'`);
+            if (str.length > 0) {
                 indices.push(tdIndex);
                 categories.push(str);
             }
@@ -456,7 +492,6 @@ export class TypeTwoZero {
                         bHandle
                     );
                 } catch (e) {
-                    // console.error(e);
                 }
             }
         }

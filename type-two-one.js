@@ -17,7 +17,7 @@ export class TypeTwoOne {
     * @returns {Promise<ScheduleOfInvestments[]>} all the SOI's found in the page.
     */
     async parseDocument(page) {
-        // console.log('Trying type 2.1');
+        console.log('Trying type 2.1');
         // This will get all our tables.
         const divs = await page.$$('body > document > type > sequence > filename > description > text > div');
         // console.log(`Divs found: ${divs.length}`);
@@ -72,7 +72,7 @@ export class TypeTwoOne {
         }
 
         const lcTitle = title.toLowerCase();
-        if (!lcTitle.includes('schedule of operations') || title.length > 750) {
+        if (!lcTitle.includes('schedule of investments') || title.length > 750) {
             return null;
         }
         // console.log(title);
