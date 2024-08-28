@@ -86,7 +86,7 @@ export class TypeTwoZero {
         }
 
         const lcTitle = title.toLowerCase();
-        if (!lcTitle.includes('schedule of') || title.length > 750) {
+        if (!lcTitle.includes('schedule of operations') || title.length > 750) {
             return null;
         }
         // console.log(title);

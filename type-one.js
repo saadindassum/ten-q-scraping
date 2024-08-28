@@ -107,7 +107,7 @@ export class TypeOne {
             }
         }
         const lcTitle = title.toLowerCase();
-        if (!lcTitle.includes('schedule of')) {
+        if (!lcTitle.includes('schedule of operations')) {
             return null;
         }
 
