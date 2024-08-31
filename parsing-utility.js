@@ -48,6 +48,13 @@ export class ParsingUtility {
         return rawString.split(/\r?\n|\r/).join('');
     }
 
+    prepareStringForOutput(rawString) {
+        let str = rawString.replace(/,/g, '');
+        str = str.replace(/$/g, '');
+        str = this.removeLineBreaks(str);
+        return str;
+    }
+
     /**
      * Returns true if any underlines are detected
      * in the TD's of a row handle.

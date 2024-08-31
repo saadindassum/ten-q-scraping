@@ -281,9 +281,7 @@ export class TypeTwoZero {
                 infoCount++;
             }
             // We have to get rid of all commas
-            str = str.replace(',', '');
-            str = str.replace('$', '');
-            str = str.replace('\n', '');
+            str = parsingUtility.prepareStringForOutput(str);
             // Info or not, we add str to the map.
             map.set(
                 categoryInfo.categoryAt(i),

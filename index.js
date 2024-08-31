@@ -199,7 +199,7 @@ async function parseEdgarSearch(page, cik) {
 
   const schedules = await tenQUtility.parse10Q(page, 'https://www.sec.gov/Archives/edgar/data/1099941/000110465918016749/a18-7739_110q.htm');
   console.log('successfully parsed schedules');
-  const form = new TenQDoc(new Date(Date.now), schedules, 'https://www.sec.gov/Archives/edgar/data/1099941/000110465918016749/a18-7739_110q.htm');
+  const form = new TenQDoc(Date(Date.now()), schedules, 'https://www.sec.gov/Archives/edgar/data/1099941/000110465918016749/a18-7739_110q.htm');
   formList.push(form);
 
   // 
