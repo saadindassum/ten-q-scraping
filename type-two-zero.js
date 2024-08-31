@@ -41,7 +41,6 @@ export class TypeTwoZero {
                 if (sched) {
                     scheduleList.push(sched);
                 }
-                break;
             }
         } catch (e) {
             console.error(e);
@@ -60,7 +59,7 @@ export class TypeTwoZero {
      */
     async parseDiv(divHandle, page) {
         const pHandles = await divHandle.$$('div > p');
-        console.log(`phandles found: ${pHandles.length}`);
+        // console.log(`phandles found: ${pHandles.length}`);
         // We get the title, we check if it's a schedule
         // For this type, we stop when we hit a date
         let title = '';
@@ -105,8 +104,9 @@ export class TypeTwoZero {
         if (tableHandle == null) {
             return null;
         }
+        title = parsingUtility.replaceCommas(title, ';');
         let schedule = await this.parseTable(tableHandle, title, date, page);
-        console.log('parsed table!');
+        // console.log('parsed table!');
         return schedule;
     }
 
@@ -195,15 +195,12 @@ export class TypeTwoZero {
             tdHandles.push(tdHandle);
         }
         let handleLengthDifference = tdHandles.length != categoryInfo.getTdLength();
-        console.log(`Category TD length: ${categoryInfo.getTdLength()}`);
-        console.log(`TD Handle length: ${tdHandles.length}`);
-        console.log(`TD handles difference? ${handleLengthDifference}`);
         // Since we have the indices of every category, we're going
         // to iterate using those.
         for (let i = 0; i < categoryInfo.getIndices().length; i++) {
             let currentHandle = tdHandles[categoryInfo.indexAt(i)];
             if (currentHandle == null) {
-                console.log(`Index: ${categoryInfo.indexAt(i)}`);
+                // console.log(`Index: ${categoryInfo.indexAt(i)}`);
                 console.error('handle null');
                 map.set(
                     categoryInfo.categoryAt(i),
@@ -212,7 +209,7 @@ export class TypeTwoZero {
                 break;
             }
             let str = await this.parseTd(currentHandle, page);
-            console.log(`%c ${categoryInfo.indexAt(i)}: '${str}'`, 'color: orange;');
+            // console.log(`%c ${categoryInfo.indexAt(i)}: '${str}'`, 'color: orange;');
             if (handleLengthDifference) {
                 // Sometimes a $ is stored where the info should be, and the data is stored
                 // in the neighbor td
@@ -225,7 +222,7 @@ export class TypeTwoZero {
                     continue;
                 }
                 if (str.length == 0 && i > 1) {
-                    console.log('empty td detected');
+                    // console.log('empty td detected');
                     // Patterns I'm accounting for here
                     // tend to pop up after the second category
                     // for this microvar
@@ -295,7 +292,7 @@ export class TypeTwoZero {
             map = new Map();
             map.set('note', firstText);
         }
-        console.log('\n\n\n');
+        // console.log('\n\n\n');
         return map;
     }
 

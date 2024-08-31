@@ -48,8 +48,24 @@ export class ParsingUtility {
         return rawString.split(/\r?\n|\r/).join('');
     }
 
+    removeCommas(rawString) {
+        return rawString.replace(/,/g, '');
+    }
+
+    replaceCommas(rawString, replacement) {
+        return rawString.replace(/,/g, replacement);
+    }
+
+    replaceLinebreaks(rawString, replacement) {
+        return rawString.split(/\r?\n|\r/).join(replacement);
+    }
+
+    removeDollar(rawString) {
+        return rawString.replace(/$/g, '');
+    }
+
     prepareStringForOutput(rawString) {
-        let str = rawString.replace(/,/g, '');
+        let str = this.removeCommas(rawString);
         str = str.replace(/$/g, '');
         str = this.removeLineBreaks(str);
         return str;

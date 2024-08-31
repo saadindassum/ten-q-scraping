@@ -155,7 +155,7 @@ export class ScheduleOfInvestments {
                 str += row.get(this.categories[j]);
                 str += ',';
             }
-            str += '\n';
+            str += '\n\n\n';
         }
 
         // And that's pretty much it.
