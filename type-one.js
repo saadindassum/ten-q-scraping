@@ -14,7 +14,7 @@ export class TypeOne {
      * @returns {Promise<ScheduleOfInvestments[]>} all the SOI's found in the page.
      */
     async parseHtm(page) {
-        console.log('Trying type 1.0');
+        // console.log('Trying type 1.0');
         // This will get all our tables.
         const tables = await page.$$('body > div > table > tbody');
         // console.log(`Tables found: ${tables.length}`);

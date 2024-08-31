@@ -29,22 +29,22 @@ async function main() {
 
   await initCluster(cluster);
 
-  // for (var i = 0; i < searches.length; i++) {
-  //   let cik = searches[i];
-  //   //If we don't do this, we won't get any hits on EDGAR
-  //   while (cik.length < 10) {
-  //     cik = '0' + cik;
-  //   }
-  //   cluster.queue(cik);
-  // }
+  for (var i = 0; i < searches.length; i++) {
+    let cik = searches[i];
+    //If we don't do this, we won't get any hits on EDGAR
+    while (cik.length < 10) {
+      cik = '0' + cik;
+    }
+    cluster.queue(cik);
+  }
 
   // These have worked in the past
-  // cluster.queue('0000017313');
+  cluster.queue('0000017313');
 
   // These ones always get errors:
-  // cluster.queue('0001383414');
-  // cluster.queue('0001200934');
-  cluster.queue('0001099941');
+  cluster.queue('0001383414');
+  cluster.queue('0001200934');
+  // cluster.queue('0001099941');
 
 
   await cluster.idle();
@@ -69,7 +69,7 @@ async function initCluster(cluster) {
         }
       });
     } catch (e) {
-      console.log(`%c ERROR AT CIK ${cik}`, 'color: red;');
+      // console.log(`%c ERROR AT CIK ${cik}`, 'color: red;');
       console.error(e);
       let str = '';
       str += e;
@@ -153,56 +153,55 @@ async function parseEdgarSearch(page, cik) {
   let links = new Array();
   let fileDates = new Array();
 
-  // for (const hit of hits) {
-  //   //For the moment, we're going to try logging file dates
-  //   const fileDate = await page.evaluate(
-  //     (el) => el.querySelector('td.filed').textContent,
-  //     hit,
-  //   );
-  //   fileDates.push(fileDate);
-  //   //Cool, now we wanna click through each filetype box.
-  //   const hitHandle = await hit.$('td.filetype > a');
-  //   // console.log(hitHandle);
-  //   hitHandle.click();
+  for (const hit of hits) {
+    //For the moment, we're going to try logging file dates
+    const fileDate = await page.evaluate(
+      (el) => el.querySelector('td.filed').textContent,
+      hit,
+    );
+    fileDates.push(fileDate);
+    //Cool, now we wanna click through each filetype box.
+    const hitHandle = await hit.$('td.filetype > a');
+    // console.log(hitHandle);
+    hitHandle.click();
 
-  //   await page.waitForSelector('#open-file', { timeout: 10000 });
-  //   let link;
-  //   while (!link) {
-  //     const buttonHandle = await page.$('#open-file');
-  //     // console.log('Button handle: ', buttonHandle);
-  //     const jsonLink = await buttonHandle.getProperty('href');
-  //     link = await jsonLink.jsonValue();
-  //   }
-  //   links.push(link);
-  //   // Now we have to close the preview page, so we find the button
-  //   // for that
-  //   await page.waitForSelector('#previewer > div > div > div.modal-header.border.border-0 > button', { timeout: 10000 });
-  //   const closeHandle = await page.$('#previewer > div > div > div.modal-header.border.border-0 > button');
-  //   try {
-  //     await closeHandle.click();
-  //   } catch (e) { }
-  //   // We add a delay because this seems to be the most intensive
-  //   // fetch, and where the SEC's most likely to block us.
-  //   await delay(500);
-  // }
+    await page.waitForSelector('#open-file', { timeout: 10000 });
+    let link;
+    while (!link) {
+      const buttonHandle = await page.$('#open-file');
+      // console.log('Button handle: ', buttonHandle);
+      const jsonLink = await buttonHandle.getProperty('href');
+      link = await jsonLink.jsonValue();
+    }
+    links.push(link);
+    // Now we have to close the preview page, so we find the button
+    // for that
+    await page.waitForSelector('#previewer > div > div > div.modal-header.border.border-0 > button', { timeout: 10000 });
+    const closeHandle = await page.$('#previewer > div > div > div.modal-header.border.border-0 > button');
+    try {
+      await closeHandle.click();
+    } catch (e) { }
+    // We add a delay because this seems to be the most intensive
+    // fetch, and where the SEC's most likely to block us.
+    await delay(500);
+  }
 
   // And now we have a full list of 10Q links!
-  // for (let i = 0; i < links.length; i++) {
+  for (let i = 0; i < links.length; i++) {
 
-  //   // console.log(`Parsing filing page: ${links[i]}`);
-  //   // console.log(`Link ${i}/${links.length}`);
-  //   const schedules = await tenQUtility.parse10Q(page, links[i]);
-  //   // console.log(`Schedules in: ${schedules}`);
-  //   const form = new TenQDoc(fileDates[i], schedules, links[i]);
-  //   formList.push(form);
-  // }
+    // console.log(`Parsing filing page: ${links[i]}`);
+    // console.log(`Link ${i}/${links.length}`);
+    const schedules = await tenQUtility.parse10Q(page, links[i]);
+    // console.log(`Schedules in: ${schedules}`);
+    const form = new TenQDoc(fileDates[i], schedules, links[i]);
+    formList.push(form);
+  }
 
-  const schedules = await tenQUtility.parse10Q(page, 'https://www.sec.gov/Archives/edgar/data/1099941/000110465918016749/a18-7739_110q.htm');
-  console.log('successfully parsed schedules');
-  const form = new TenQDoc(Date(Date.now()), schedules, 'https://www.sec.gov/Archives/edgar/data/1099941/000110465918016749/a18-7739_110q.htm');
-  formList.push(form);
-
-  // 
+  // For testing
+  // const schedules = await tenQUtility.parse10Q(page, 'https://www.sec.gov/Archives/edgar/data/1099941/000110465918016749/a18-7739_110q.htm');
+  // console.log('successfully parsed schedules');
+  // const form = new TenQDoc(Date(Date.now()), schedules, 'https://www.sec.gov/Archives/edgar/data/1099941/000110465918016749/a18-7739_110q.htm');
+  // formList.push(form);
 
   await page.close();
   // console.log('Finished CIK ', cik);

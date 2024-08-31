@@ -19,13 +19,13 @@ export class TypeTwoZero {
          * @returns {Promise<ScheduleOfInvestments[]>} all the SOI's found in the page.
          */
     async parseDocument(page) {
-        console.log('Trying type 2.0');
+        // console.log('Trying type 2.0');
         // This will get all our tables.
         let divs = await page.$$('body > div');
         if (divs.length == 0) {
             divs = await page.$$('body > document > type > sequence > filename > description > text > div');
         }
-        console.log(`Divs found: ${divs.length}`);
+        // console.log(`Divs found: ${divs.length}`);
         if (divs.length === 0) {
             // console.log(`%cNO DIVS FOUND`, 'color: yellow;');
             return null;
@@ -93,7 +93,7 @@ export class TypeTwoZero {
         const lcTitle = title.toLowerCase();
         if (!lcTitle.includes('schedule of investments') || title.length > 750) {
             if (title.length < 750) {
-                console.log(title);
+                // console.log(title);
             }
             return null;
         }
