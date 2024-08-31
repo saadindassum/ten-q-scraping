@@ -81,7 +81,6 @@ export class TypeTwoZero {
                 let dateString = str;
                 try {
                     let potentialDate = parsingUtility.getDate(dateString);
-                    console.log(`%c ToString: ${potentialDate.toString()}`, 'color: orange;');
                     if (potentialDate.toString() !== 'Invalid Date') {
                         date = potentialDate;
                     }
@@ -99,7 +98,7 @@ export class TypeTwoZero {
             }
             return null;
         }
-        console.log(`%c TITLE LENGTH: ${title.length}`, 'color: orange;');
+        // console.log(`%c TITLE LENGTH: ${title.length}`, 'color: orange;');
 
         // Table is inside yet another div
         const tableHandle = await divHandle.$('div > table');
@@ -107,6 +106,7 @@ export class TypeTwoZero {
             return null;
         }
         let schedule = await this.parseTable(tableHandle, title, date, page);
+        console.log('parsed table!');
         return schedule;
     }
 
@@ -119,7 +119,7 @@ export class TypeTwoZero {
     * @returns {Promise<ScheduleOfInvestments>} or null.
     */
     async parseTable(tableHandle, title, date, page) {
-        let i = 0;
+        var i = 0;
         const rows = await tableHandle.$$('tr');
         let rowHandles = new Array();
         for await (const rowHandle of rows) {
@@ -180,9 +180,6 @@ export class TypeTwoZero {
      * @returns {Promise<Map<String, String>>}
      */
     async getRowInfo(rowHandle, categoryInfo, page) {
-        // console.log('Getting row info!');
-        // console.log(categoryInfo.getCategories());
-        // console.log(categoryInfo.getIndices());
         let map = new Map();
         // This will help us see if the row stores a note and nothing else
         // If it does, we want to return a single key/value.
@@ -197,8 +194,10 @@ export class TypeTwoZero {
         for await (const tdHandle of tds) {
             tdHandles.push(tdHandle);
         }
-        // console.log(tdHandles);
-
+        let handleLengthDifference = tdHandles.length != categoryInfo.getTdLength();
+        console.log(`Category TD length: ${categoryInfo.getTdLength()}`);
+        console.log(`TD Handle length: ${tdHandles.length}`);
+        console.log(`TD handles difference? ${handleLengthDifference}`);
         // Since we have the indices of every category, we're going
         // to iterate using those.
         for (let i = 0; i < categoryInfo.getIndices().length; i++) {
@@ -213,66 +212,63 @@ export class TypeTwoZero {
                 break;
             }
             let str = await this.parseTd(currentHandle, page);
-
             console.log(`%c ${categoryInfo.indexAt(i)}: '${str}'`, 'color: orange;');
-            // Sometimes a $ is stored where the info should be, and the data is stored
-            // in the neighbor td
-            if (str === '$') {
-                // Every $ adds an extra td, so we're going to remove
-                // that td from our array, then go back.
-                tdHandles.splice(i, 1);
-                i--;
-                console.log('%c SPLICED', 'color: orange;');
-                continue;
-            }
-            if (str.length == 0 && i > 1) {
-                // Patterns I'm accounting for here
-                // tend to pop up after the second category
-                // for this microvar
-                try {
-                    // first variation is more than two blanks in a row.
-                    let blankCount = 1;
-                    let j = i;
-                    for (j; j < categoryInfo.getCategories().length; j++) {
-                        // Once we find the first text, we break, and we leave i at that index.
-                        let jHandle = tdHandles[categoryInfo.indexAt(j)];
-                        console.log(`%c jHandle: ${jHandle}`, 'color: yellow;');
-                        const jText = await this.parseTd(jHandle);
-                        console.log(`jText: '${jText}'`);
-                        if (jText.length != 0) {
-                            // This means wer found text.
-                            break;
+            if (handleLengthDifference) {
+                // Sometimes a $ is stored where the info should be, and the data is stored
+                // in the neighbor td
+                if (str === '$') {
+                    // Every $ adds an extra td, so we're going to remove
+                    // that td from our array, then go back.
+                    tdHandles.splice(i, 1);
+                    i--;
+                    // console.log('%c SPLICED', 'color: orange;');
+                    continue;
+                }
+                if (str.length == 0 && i > 1) {
+                    console.log('empty td detected');
+                    // Patterns I'm accounting for here
+                    // tend to pop up after the second category
+                    // for this microvar
+                    try {
+                        // We need to look at the previous two handles
+                        // And the next two handles
+                        const prevPrevHandle = tdHandles[categoryInfo.indexAt(i) - 2];
+                        const prevHandle = tdHandles[categoryInfo.indexAt(i) - 1];
+                        const nextHandle = tdHandles[categoryInfo.indexAt(i) + 1];
+                        const nextNextHandle = tdHandles[categoryInfo.indexAt(i) + 2];
+                        const prevPrev = await this.parseTd(prevPrevHandle);
+                        const prev = await this.parseTd(prevHandle, page);
+                        const next = await this.parseTd(nextHandle, page);
+                        const nextNext = await this.parseTd(nextNextHandle, page);
+                        // console.log(`${prevPrev}, ${prev} <-`);
+                        // console.log(`${nextNext}, ${next} <-`);
+                        if (parsingUtility.removeNonAlphanumeric(prev).length == 0) {
+                            if (next.length + nextNext.length == 0 || prev.length + prevPrev.length == 0) {
+                                // console.log('lotta space');
+                                // We do nothing. It's just a row with a bunch of blanks.
+                                // I know this it's a bit of a sin to leave empty brackets
+                                // But hey, if it works...
+                            }
+                            else if (next === '$' || parsingUtility.removeNonAlphanumeric(next).length == 0) {
+                                // console.log('B$ || BB');
+                                // Pattern: two blanks then dollar
+                                // Or three blanks in a row at a td where
+                                // data is supposed to be.
+                                // We're supposed to land in the middle one.
+                                tdHandles.splice(i - 1, 2);
+                                i--;
+                                continue;
+                            } else {
+                                // console.log('BB');
+                                // Pattern: two blanks in a row
+                                // where data is supposed to be.
+                                tdHandles.splice(i, 1);
+                                i--;
+                                continue;
+                            }
                         }
-                        blankCount++;
+                    } catch (e) {
                     }
-                    if (blankCount > 2 && j < categoryInfo.getCategories().length) {
-                        console.log(`%c CONTINUE TO ${j}`, 'color: yellow;');
-                        i = j - 1;
-                        //Takes i straight to the info.
-                        continue;
-                    }
-                } catch (e) { }
-                try {
-                    const prevHandle = tdHandles[categoryInfo.indexAt(i) - 1];
-                    const nextHandle = tdHandles[categoryInfo.indexAt(i) + 1];
-                    const prev = await this.parseTd(prevHandle, page);
-                    const next = await this.parseTd(nextHandle, page);
-                    if (prev === '') {
-                        if (next === '$' || next === ' ') {
-                            // Pattern: two blanks then dollar
-                            // Or three blanks in a row at a td where
-                            // data is supposed to be.
-                            // We're supposed to land in the middle one.
-                            tdHandles.splice(i - 1, 2);
-                        } else {
-                            // Pattern: two blanks in a row
-                            // where data is supposed to be.
-                            tdHandles.splice(i, 1);
-                        }
-                        i--;
-                        continue;
-                    }
-                } catch (e) {
                 }
             }
             if (str) {
@@ -287,6 +283,7 @@ export class TypeTwoZero {
             // We have to get rid of all commas
             str = str.replace(',', '');
             str = str.replace('$', '');
+            str = str.replace('\n', '');
             // Info or not, we add str to the map.
             map.set(
                 categoryInfo.categoryAt(i),
@@ -354,7 +351,7 @@ export class TypeTwoZero {
             }
             tdIndex++;
         }
-        return new CategoryInfo(indices, categories);
+        return new CategoryInfo(indices, categories, tds.length);
     }
 
     /**
@@ -474,7 +471,7 @@ export class TypeTwoZero {
      * @param {Page} page 
      * @returns {Promise<String>}
      */
-    async parseTd(tdHandle, page) {
+    async parseTd(tdHandle, page, doLog) {
         let str = '';
         try {
             str = await page.evaluate(
@@ -495,13 +492,21 @@ export class TypeTwoZero {
                 }
             }
         }
-        if (str === '$') {
-            // In this case we don't want to strip it of alphanumerics
-            // We want to detect it. Let's return it.
-            return str;
+        if (doLog) {
+            console.log(`parsed '${str}'`);
         }
         let noSpace = str;
         noSpace = parsingUtility.removeNonAlphanumeric(noSpace);
+        if (doLog) {
+            console.log(`noSpace: '${noSpace}'`);
+        }
+        if (str.includes('$') && noSpace.length == 0) {
+            // Because for some reason we can't manage to remove line breaks
+            // without removing all other non-alphanumerics.
+            // In this case we don't want to strip it of alphanumerics
+            // We want to detect it. Let's return it.
+            return '$';
+        }
         // console.log(`NOSPACE:${noSpace}\nlength: ${noSpace.length}`);
         if (noSpace.length == 0) {
             return noSpace;

@@ -33,11 +33,20 @@ export class ParsingUtility {
     /**
      * 
      * @param {String} rawString 
-     * @returns 
+     * @returns {String}
      */
     removeNonAlphanumeric(rawString) {
         return rawString.replace(/[^a-zA-Z0-9]/g, '');
     };
+
+    /**
+     * 
+     * @param {String} rawString 
+     * @returns {String}
+     */
+    removeLineBreaks(rawString) {
+        return rawString.split(/\r?\n|\r/).join('');
+    }
 
     /**
      * Returns true if any underlines are detected
@@ -56,7 +65,7 @@ export class ParsingUtility {
                     td
                 );
             } catch (e) { }
-            console.log(styleString);
+            // console.log(styleString);
             if (this.stringHasUnderline(styleString))
             {
                 return true;

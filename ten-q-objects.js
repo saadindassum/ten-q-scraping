@@ -10,11 +10,13 @@ export class CategoryInfo {
      * Information about categories for an organized 10Q table.
      * @param {Number[]} indices
      * @param {String[]} categories
+     * @param {Number} tdLength
      */
-    constructor(indices, categories) {
+    constructor(indices, categories, tdLength) {
         this.map = new Map();
         this.map.set('categories', categories);
         this.map.set('indices', indices);
+        this.tdLength = tdLength;
     }
 
     /**
@@ -53,6 +55,14 @@ export class CategoryInfo {
         let catArray = this.map.get('categories');
         catArray[i] = value;
         this.map.set('categories', catArray);
+    }
+
+    /**
+     * 
+     * @returns {number} how many TD's were found in the row that stored categories.
+     */
+    getTdLength() {
+        return this.tdLength;
     }
 }
 
