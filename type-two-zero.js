@@ -36,14 +36,13 @@ export class TypeTwoZero {
 
         try {
             for await (let divHandle of divs) {
-                divHandle = await page.$('body > document > type > sequence > filename > description > text > div:nth-child(15)');
                 let sched = await this.parseDiv(divHandle, page);
                 if (sched) {
                     scheduleList.push(sched);
                 }
             }
         } catch (e) {
-            console.error(e);
+            // console.error(e);
             let sched = await tto.parseDocument(page);
             return sched;
         }
@@ -98,13 +97,13 @@ export class TypeTwoZero {
             return null;
         }
         // console.log(`%c TITLE LENGTH: ${title.length}`, 'color: orange;');
-
+        title = parsingUtility.replaceCommas(title, ';');
+        // console.log(`TITLE: ${title}`);
         // Table is inside yet another div
         const tableHandle = await divHandle.$('div > table');
         if (tableHandle == null) {
             return null;
         }
-        title = parsingUtility.replaceCommas(title, ';');
         let schedule = await this.parseTable(tableHandle, title, date, page);
         // console.log('parsed table!');
         return schedule;
@@ -201,7 +200,7 @@ export class TypeTwoZero {
             let currentHandle = tdHandles[categoryInfo.indexAt(i)];
             if (currentHandle == null) {
                 // console.log(`Index: ${categoryInfo.indexAt(i)}`);
-                console.error('handle null');
+                // console.error('handle null');
                 map.set(
                     categoryInfo.categoryAt(i),
                     ''
@@ -339,6 +338,7 @@ export class TypeTwoZero {
             str = str.replace('\n', '');
             // console.log(`rpl: '${str}'`);
             str = str.replace('    ', '');
+            str = str.replace(',', ';');
             // console.log(`rps: '${str}'`);
             if (str.length > 0) {
                 indices.push(tdIndex);

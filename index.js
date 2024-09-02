@@ -19,8 +19,8 @@ async function main() {
   // That will speed things up.
   const cluster = await Cluster.launch({
     concurrency: Cluster.CONCURRENCY_CONTEXT,
-    maxConcurrency: 3,
-    timeout: 1200000,
+    maxConcurrency: 4,
+    timeout: 12000000,
     puppeteerOptions: {
       headless: false,
       args: [`--window-size=${1920},${1080}`],
@@ -39,11 +39,11 @@ async function main() {
   }
 
   // These have worked in the past
-  cluster.queue('0000017313');
+  // cluster.queue('0000017313');
 
   // These ones always get errors:
-  cluster.queue('0001383414');
-  cluster.queue('0001200934');
+  // cluster.queue('0001383414');
+  // cluster.queue('0001200934');
   // cluster.queue('0001099941');
 
 
@@ -58,7 +58,7 @@ async function main() {
  */
 async function initCluster(cluster) {
   await cluster.task(async ({ page, data: cik }) => {
-    try {
+    // try {
       let documentCollection = await parseEdgarSearch(page, cik);
       let outputString = documentCollection.toCsv();
       fs.writeFile(`./output/${cik}.csv`, outputString, err => {
@@ -68,19 +68,19 @@ async function initCluster(cluster) {
           // file written successfully
         }
       });
-    } catch (e) {
-      // console.log(`%c ERROR AT CIK ${cik}`, 'color: red;');
-      console.error(e);
-      let str = '';
-      str += e;
-      try {
-        fs.writeFileSync(
-          `./output/${cik}.txt`,
-          str
-        );
-      } catch (e) { }
-      return false;
-    }
+    // } catch (e) {
+    //   // console.log(`%c ERROR AT CIK ${cik}`, 'color: red;');
+    //   // console.error(e);
+    //   let str = '';
+    //   str += e;
+    //   try {
+    //     fs.writeFileSync(
+    //       `./output/${cik}.txt`,
+    //       str
+    //     );
+    //   } catch (e) { }
+    //   return false;
+    // }
   });
 }
 
@@ -183,7 +183,7 @@ async function parseEdgarSearch(page, cik) {
     } catch (e) { }
     // We add a delay because this seems to be the most intensive
     // fetch, and where the SEC's most likely to block us.
-    await delay(500);
+    await delay(1000);
   }
 
   // And now we have a full list of 10Q links!

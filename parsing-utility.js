@@ -64,6 +64,11 @@ export class ParsingUtility {
         return rawString.replace(/$/g, '');
     }
 
+    /**
+     * 
+     * @param {String} rawString 
+     * @returns {String} prepares string for CSV output
+     */
     prepareStringForOutput(rawString) {
         let str = this.removeCommas(rawString);
         str = str.replace(/$/g, '');

@@ -1,3 +1,17 @@
+
+Close solves (scan for variations):
+https://www.sec.gov/Archives/edgar/data/0001544206/000154420622000074/csl-20220930.htm
+https://www.sec.gov/Archives/edgar/data/0001544206/000154420622000074/csl-20220930.htm
+
+Sucessful solves after Type 2.0 implementation
+0001200934
+https://www.sec.gov/Archives/edgar/data/0001200934/000095013304003204/w00243e10vq.htm
+https://www.sec.gov/Archives/edgar/data/0001200934/000095013304001965/w97336e10vq.htm
+
+
+
+
+
 I'm thinking we can tell apart variations by their links.
 But hey, that's just a theory.
 A 10Q Scraping theory.
