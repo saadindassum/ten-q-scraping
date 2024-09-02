@@ -130,6 +130,7 @@ export class ScheduleOfInvestments {
                 }
             }
         }
+        str = str.replace(/,/g, ';');
         str += ','
 
         str += this.date.toISOString();

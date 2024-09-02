@@ -46,6 +46,13 @@ async function main() {
   // cluster.queue('0001200934');
   // cluster.queue('0001099941');
 
+  // Fix for maybe easy wins!
+  cluster.queue('0001515173'); //toISO problem, suspecting in date
+  cluster.queue('0001523526'); //toIso problem, suspecting in date
+  cluster.queue('0001143513');
+  cluster.quque('0001287750');
+  cluster.queue('0001487428');
+
 
   await cluster.idle();
   await cluster.close();
@@ -58,7 +65,7 @@ async function main() {
  */
 async function initCluster(cluster) {
   await cluster.task(async ({ page, data: cik }) => {
-    // try {
+    try {
       let documentCollection = await parseEdgarSearch(page, cik);
       let outputString = documentCollection.toCsv();
       fs.writeFile(`./output/${cik}.csv`, outputString, err => {
@@ -68,19 +75,19 @@ async function initCluster(cluster) {
           // file written successfully
         }
       });
-    // } catch (e) {
-    //   // console.log(`%c ERROR AT CIK ${cik}`, 'color: red;');
-    //   // console.error(e);
-    //   let str = '';
-    //   str += e;
-    //   try {
-    //     fs.writeFileSync(
-    //       `./output/${cik}.txt`,
-    //       str
-    //     );
-    //   } catch (e) { }
-    //   return false;
-    // }
+    } catch (e) {
+      // console.log(`%c ERROR AT CIK ${cik}`, 'color: red;');
+      // console.error(e);
+      let str = '';
+      str += e;
+      try {
+        fs.writeFileSync(
+          `./output/${cik}.txt`,
+          str
+        );
+      } catch (e) { }
+      return false;
+    }
   });
 }
 
