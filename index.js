@@ -29,14 +29,14 @@ async function main() {
 
   await initCluster(cluster);
 
-  for (var i = 0; i < searches.length; i++) {
-    let cik = searches[i];
-    //If we don't do this, we won't get any hits on EDGAR
-    while (cik.length < 10) {
-      cik = '0' + cik;
-    }
-    cluster.queue(cik);
-  }
+  // for (var i = 0; i < searches.length; i++) {
+  //   let cik = searches[i];
+  //   //If we don't do this, we won't get any hits on EDGAR
+  //   while (cik.length < 10) {
+  //     cik = '0' + cik;
+  //   }
+  //   cluster.queue(cik);
+  // }
 
   // These have worked in the past
   // cluster.queue('0000017313');
@@ -49,9 +49,9 @@ async function main() {
   // Fix for maybe easy wins!
   cluster.queue('0001515173'); //toISO problem, suspecting in date
   cluster.queue('0001523526'); //toIso problem, suspecting in date
-  cluster.queue('0001143513');
-  cluster.quque('0001287750');
-  cluster.queue('0001487428');
+  // cluster.queue('0001143513');
+  // cluster.quque('0001287750');
+  // cluster.queue('0001487428');
 
 
   await cluster.idle();

@@ -46,7 +46,7 @@ export class TypeTwoZero {
             let sched = await tto.parseDocument(page);
             return sched;
         }
-
+        console.log('%c Completed type 2.0', 'color: orange;');
         return scheduleList;
     }
 
@@ -72,7 +72,7 @@ export class TypeTwoZero {
             if (str) {
                 noSpace = parsingUtility.removeNonAlphanumeric(str);
             }
-            if (noSpace.length > 0 && str !== 'Table of Contents') {
+            if (noSpace.length > 0 && !str.includes('Table of Contents')) {
                 title += str;
                 title += '\n';
                 //Because the date always comes last.
@@ -83,22 +83,18 @@ export class TypeTwoZero {
                         date = potentialDate;
                     }
                 } catch (e) { }
-            } else {
-                if (title.length != 0 && str !== 'Table of Contents') {
-                    break;
-                }
             }
         }
         const lcTitle = title.toLowerCase();
-        if (!lcTitle.includes('schedule of investments') || title.length > 750) {
-            if (title.length < 750) {
-                // console.log(title);
+        if (!lcTitle.includes('schedule of investments') || title.length > 500) {
+            if (title.length < 500) {
+                console.log(`TITLE: '${title}'`);
             }
             return null;
         }
         // console.log(`%c TITLE LENGTH: ${title.length}`, 'color: orange;');
         title = parsingUtility.replaceCommas(title, ';');
-        // console.log(`TITLE: ${title}`);
+        console.log(`%c TITLE: ${title}`, 'color: green;');
         // Table is inside yet another div
         const tableHandle = await divHandle.$('div > table');
         if (tableHandle == null) {
@@ -421,9 +417,10 @@ export class TypeTwoZero {
                 pHandle,
             );
             if (!str) {
+                let bFontHandle = await pHandle.$('b > font');
                 str = await page.evaluate(
-                    (handle) => handle.querySelector('font').textContent,
-                    pHandle,
+                    (handle) => handle.textContent,
+                    bFontHandle,
                 );
             }
         } catch (e) {
