@@ -1,4 +1,4 @@
-import puppeteer, { Browser, Page } from 'puppeteer';
+import puppeteer, { Page } from 'puppeteer';
 import { Cluster } from 'puppeteer-cluster';
 import { TenQDoc } from './ten-q-objects.js';
 import { TenQCollection } from './ten-q-objects.js';
@@ -19,8 +19,8 @@ async function main() {
   // That will speed things up.
   const cluster = await Cluster.launch({
     concurrency: Cluster.CONCURRENCY_CONTEXT,
-    maxConcurrency: 3,
-    timeout: 1200000,
+    maxConcurrency: 4,
+    timeout: 12000000,
     puppeteerOptions: {
       headless: false,
       args: [`--window-size=${1920},${1080}`],
@@ -29,18 +29,29 @@ async function main() {
 
   await initCluster(cluster);
 
-  for (var i = 0; i < searches.length; i++) {
-    let cik = searches[i];
-    //If we don't do this, we won't get any hits on EDGAR
-    while (cik.length < 10) {
-      cik = '0' + cik;
-    }
-    cluster.queue(cik);
-  }
+  // for (var i = 0; i < searches.length; i++) {
+  //   let cik = searches[i];
+  //   //If we don't do this, we won't get any hits on EDGAR
+  //   while (cik.length < 10) {
+  //     cik = '0' + cik;
+  //   }
+  //   cluster.queue(cik);
+  // }
+
+  // These have worked in the past
+  // cluster.queue('0000017313');
 
   // These ones always get errors:
   // cluster.queue('0001383414');
-  // cluster.queue('0000017313');
+  // cluster.queue('0001200934');
+  // cluster.queue('0001099941');
+
+  // Fix for maybe easy wins!
+  cluster.queue('0001515173'); //toISO problem, suspecting in date
+  cluster.queue('0001523526'); //toIso problem, suspecting in date
+  // cluster.queue('0001143513');
+  // cluster.quque('0001287750');
+  // cluster.queue('0001487428');
 
 
   await cluster.idle();
@@ -59,14 +70,14 @@ async function initCluster(cluster) {
       let outputString = documentCollection.toCsv();
       fs.writeFile(`./output/${cik}.csv`, outputString, err => {
         if (err) {
-          console.error(err);
+          // console.error(err);
         } else {
           // file written successfully
         }
       });
     } catch (e) {
       // console.log(`%c ERROR AT CIK ${cik}`, 'color: red;');
-      console.error(e);
+      // console.error(e);
       let str = '';
       str += e;
       try {
@@ -179,7 +190,7 @@ async function parseEdgarSearch(page, cik) {
     } catch (e) { }
     // We add a delay because this seems to be the most intensive
     // fetch, and where the SEC's most likely to block us.
-    await delay(250);
+    await delay(1000);
   }
 
   // And now we have a full list of 10Q links!
@@ -193,10 +204,14 @@ async function parseEdgarSearch(page, cik) {
     formList.push(form);
   }
 
-  // 
+  // For testing
+  // const schedules = await tenQUtility.parse10Q(page, 'https://www.sec.gov/Archives/edgar/data/1099941/000110465918016749/a18-7739_110q.htm');
+  // console.log('successfully parsed schedules');
+  // const form = new TenQDoc(Date(Date.now()), schedules, 'https://www.sec.gov/Archives/edgar/data/1099941/000110465918016749/a18-7739_110q.htm');
+  // formList.push(form);
 
   await page.close();
-  console.log('Finished CIK ', cik);
+  // console.log('Finished CIK ', cik);
   return new TenQCollection(cik, formList);
 
 }

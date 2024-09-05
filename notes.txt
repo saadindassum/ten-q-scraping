@@ -1,0 +1,54 @@
+
+Close solves (scan for variations):
+https://www.sec.gov/Archives/edgar/data/0001544206/000154420622000074/csl-20220930.htm
+https://www.sec.gov/Archives/edgar/data/0001544206/000154420622000074/csl-20220930.htm
+
+Sucessful solves after Type 2.0 implementation
+0001200934
+https://www.sec.gov/Archives/edgar/data/0001200934/000095013304003204/w00243e10vq.htm
+https://www.sec.gov/Archives/edgar/data/0001200934/000095013304001965/w97336e10vq.htm
+
+
+
+
+
+I'm thinking we can tell apart variations by their links.
+But hey, that's just a theory.
+A 10Q Scraping theory.
+
+After 'data/' there's the CIK number without the 0's included.
+The mystery right now is what the number means that come after that slash.
+This might not lead anywhere.
+
+Type 2
+Sched titles are nested within divs, sometimes within a p, then a font tag, other times within just a p.
+Within the same div, there will be another div containing the table. Text itself is nested differently according to
+the microvariation.
+As far as I can tell, micorvariations have the same length of link.
+
+Type 2, microvar 0 links
+https://www.sec.gov/Archives/edgar/data/17313/000001731316000023/cswc-20160930x10q.htm
+
+Type 2, microvar 1 links
+https://www.sec.gov/Archives/edgar/data/1200934/000095013304001965/w97336e10vq.htm
+https://www.sec.gov/Archives/edgar/data/1200934/000095013304003204/w00243e10vq.htm
+
+Type 2, microvar 2  - dateless tables
+https://www.sec.gov/Archives/edgar/data/748268/000110801711000380/bl10q2009.htm
+
+
+TYPE 3
+No container uniting the table and the title. The title is contained in one div per line.
+My guess is our best bet is parsing for tables, then looking at the divs above (stopping at whichever one contains the table of contents)
+And then determining if those divs contain "schedule of"
+
+Microvar 0 - big div containing title div, easier to parse
+https://www.sec.gov/Archives/edgar/data/1901612/000190161224000038/gbdc4-20240331.htm
+https://www.sec.gov/Archives/edgar/data/17313/000114036112035332/form10q.htm
+
+Microvar 1 - separate divs for title. Blank div or table of contents text in div above title start
+https://www.sec.gov/Archives/edgar/data/1955010/000162828023037899/brhc-20230930.htm
+https://www.sec.gov/Archives/edgar/data/1577134/000157713422000021/tfsa-20220930.htm
+
+Microvar 2 - no divs, but p tags - SAME LENGTH AS T2MV2
+https://www.sec.gov/Archives/edgar/data/1577134/000114420416101261/v438516_10q.htm

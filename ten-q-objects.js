@@ -10,13 +10,15 @@ export class CategoryInfo {
      * Information about categories for an organized 10Q table.
      * @param {Number[]} indices
      * @param {String[]} categories
+     * @param {Number} tdLength
      */
-    constructor(indices, categories) {
+    constructor(indices, categories, tdLength) {
         this.map = new Map();
         this.map.set('categories', categories);
         this.map.set('indices', indices);
+        this.tdLength = tdLength;
     }
-    
+
     /**
      * @returns {Number[]} An array of indices which have a category
      */
@@ -39,7 +41,7 @@ export class CategoryInfo {
     getCategories() {
         return this.map.get('categories');
     }
-    
+
     /**
      * 
      * @param {Number} i 
@@ -47,6 +49,20 @@ export class CategoryInfo {
      */
     categoryAt(i) {
         return this.map.get('categories')[i];
+    }
+
+    setCategoryAt(i, value) {
+        let catArray = this.map.get('categories');
+        catArray[i] = value;
+        this.map.set('categories', catArray);
+    }
+
+    /**
+     * 
+     * @returns {number} how many TD's were found in the row that stored categories.
+     */
+    getTdLength() {
+        return this.tdLength;
     }
 }
 
@@ -101,7 +117,7 @@ export class ScheduleOfInvestments {
                 let maybeDate = new Date(Date.parse(dateString));
                 maybeDate = maybeDate.toUTCString();
                 datesEqual = maybeDate === this.date.toUTCString();
-            } catch (e) {}
+            } catch (e) { }
             if (!datesEqual) {
                 if (str && bit != splitTitle[splitTitle.length - 1]) {
                     // If string not empty
@@ -114,8 +130,9 @@ export class ScheduleOfInvestments {
                 }
             }
         }
+        str = str.replace(/,/g, ';');
         str += ','
-        
+
         str += this.date.toISOString();
         str += '\n';
 
@@ -139,7 +156,7 @@ export class ScheduleOfInvestments {
                 str += row.get(this.categories[j]);
                 str += ',';
             }
-            str += '\n';
+            str += '\n\n\n';
         }
 
         // And that's pretty much it.
@@ -207,9 +224,6 @@ export class TenQDoc {
     constructor(fileDate, schedules, link) {
         this.fileDate = fileDate;
         this.schedules = schedules;
-        if (schedules.length != 0) {
-            console.log(schedules);
-        }
         this.link = link;
     }
 
