@@ -35,4 +35,4 @@ Oh, and did I mention running time will be much faster as well? Here are the ste
 5. Parse category info (category names along with their column indices)
 6. Parse each row of the table.
 
-We'll implement these top to bottom, working on the worst/default case first. Worst case I can think of right now being an unparsed document where everything's contained in a single p tag.
+We'll implement these top to bottom, working on the worst/default case first. Worst case I can think of right now being an unparsed document where all text in a file is contained in a single p tag. Older 10Qs from '04 are good for finding these worst case scenarios.
