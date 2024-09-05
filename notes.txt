@@ -1,8 +1,8 @@
 In progress
-https://www.sec.gov/Archives/edgar/data/17313/000101054904000079/capital10q123103.txt
+https://www.sec.gov/Archives/edgar/data/17313/000101054904000079/capital10q123103.txt (barebones)
 
 Successful solves
-0001515173
+0001515173 (type 2)
 
 Close solves (scan for variations):
 https://www.sec.gov/Archives/edgar/data/0001544206/000154420622000074/csl-20220930.htm
