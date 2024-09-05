@@ -26,13 +26,14 @@ This approach is much more flexible. For example, if you have a type one TD on a
 should now parse that just fine, where as it would have been impossible with our previous approach.
 Any fixes to parsing will also apply to all sorts of parsing, speeding up the process.
 
-Oh, and did I mention running time will be much faster as well? Here are the steps to parse a 10Q for schedule.
+Oh, and did I mention running time will be much faster as well? Here are the steps to parse a 10Q for schedule, each step nested under the other for each schedule.
 
-1. Identify a title which belongs to a table and contains the string "schedule of investments".
-2. Find the table.
-3. If file date was not found in the title, parse the date.
-4. If the file date was not found in the title, find the file date on the table.
-5. Parse category info (category names along with their column indices)
-6. Parse each row of the table.
+1. Find all schedules in the document
+2. Identify the title which belongs to the table and contains the string "schedule of investments".
+3. Find the table.
+4. If file date was not found in the title, parse the date.
+5. If the file date was not found in the title, find the file date on the table.
+6. Parse category info (category names along with their column indices)
+7. Parse each row of the table.
 
 We'll implement these top to bottom, working on the worst/default case first. Worst case I can think of right now being an unparsed document where all text in a file is contained in a single p tag. Older 10Qs from '04 are good for finding these worst case scenarios.

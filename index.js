@@ -47,8 +47,8 @@ async function main() {
   // cluster.queue('0001099941');
 
   // Fix for maybe easy wins!
-  cluster.queue('0001515173'); //toISO problem, suspecting in date
-  cluster.queue('0001523526'); //toIso problem, suspecting in date
+  // cluster.queue('0001515173'); //toISO problem, suspecting in date
+  // cluster.queue('0001523526'); //toIso problem, suspecting in date
   // cluster.queue('0001143513');
   // cluster.quque('0001287750');
   // cluster.queue('0001487428');
@@ -90,30 +90,6 @@ async function initCluster(cluster) {
     }
   });
 }
-
-// /**
-//  * Opens a browser and scrapes EDGAR for information about a CIK
-//  * and writes found data to a csv file.
-//  * @param {String} cik
-//  * @param {Browser} browser
-//  * @returns {Promise<Boolean>} success or failure.
-//  */
-// async function scrapeCik(browser, cik) {
-//   // Launch the browser and open a new blank page
-//   console.log('Attempting to parse ', cik);
-//   try {
-//     let documentCollection = await parseEdgarSearch(browser, cik);
-//     let outputString = documentCollection.toCsv();
-//     fs.writeFileSync(
-//       `./output/${cik}.csv`,
-//       outputString
-//     );
-//   } catch (e) {
-//     console.error(e);
-//     return false;
-//   }
-//   return true;
-// }
 
 /**
  * Takes a filename outputs the file line by line as strings

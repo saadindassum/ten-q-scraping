@@ -12,8 +12,7 @@ export class ParsingUtility {
         let date;
         // console.log(`Date string: ${dateString}`);
         try {
-            dateString += 'Z';
-            date = new Date(Date.parse(dateString));
+            
         } catch (e) {
             return null;
         }
@@ -39,6 +38,46 @@ export class ParsingUtility {
         return rawString.replace(/[^a-zA-Z0-9]/g, '');
     };
 
+    removeExtraSpaces(rawString) {
+        let split = rawString.split(/\s/g);
+        return this.arrayToString(split);
+    }
+
+    /**
+     * 
+     * @param {String[]} arr 
+     * @returns {String} with only spaces between data.
+     */
+    arrayToString(arr) {
+        let output = '';
+        for (let i = 0; i < arr.length; i++) {
+            if (arr[i].length > 0) {
+                output += `${arr[i]} `;
+            }
+        }
+        // Output ends up with one extra ' ', which we remove.
+        output = output.slice(0, output.length - 1);
+        return output;
+    }
+
+    /**
+     * 
+     * @param {String} rawString 
+     * @returns {String[]}
+     */
+    splitBySpaces(rawString) {
+        return rawString.split(/\s/g);
+    }
+
+    /**
+    * Removes all spaces in a string
+    * @param {String} rawString 
+    * @returns {String}
+    */
+    removeSpaces(rawString) {
+        return rawString.split(/\s/g).join('');
+    }
+    
     /**
      * 
      * @param {String} rawString 
