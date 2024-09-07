@@ -112,6 +112,18 @@ async function getLines(filename) {
 /**
  * 
  * @param {Page} page 
+ * @param {String} url 
+ */
+async function testPage(page, url) {
+  const tenQUtility = new TenQUtility();
+  const schedules = await tenQUtility.parse10Q(page, url);
+  const collection = new TenQCollection('TEST', [schedules]);
+  return collection;
+}
+
+/**
+ * 
+ * @param {Page} page 
  * @param {string} search
  * @returns {Promise<TenQCollection>} the title of the forms found.
  */

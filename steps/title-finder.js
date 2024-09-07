@@ -3,10 +3,26 @@ import { AsciiUtility } from "../ascii-parsing-utility";
 
 var parsingUtility = new ParsingUtility();
 
+/**
+ * Fetches titles and dates for scheudules
+ */
 export class TitleFinder {
     constructor() {
         this.scheduleTitle = '';
         this.date = null;
+    }
+
+    /**
+     * 
+     * @param {String} ttl 
+     * @returns {Boolean} whether the title belongs to a schedule
+     */
+    titleValid(ttl) {
+        if (ttl.length == 0) return false;
+        let lc = ttl.toLowerCase();
+        let includesWord = lc.includes ('schedule of investments') || lc.includes('schedule of portfolio investments');
+        let shortEnough = lc.length < 550;
+        return includesWord && shortEnough
     }
 
     /**
@@ -24,12 +40,15 @@ export class TitleFinder {
     /**
      * For older documents stored in txt form.
      * Sets date if a date is found.
-     * @param {String} str 
+     * @param {String[]} pages a 
      * @returns {String} the title of the schedule.
      */
-    barebones(str) {
+    barebones(sheet) {
         // We're gonna get rid of the table.
-        let split = str.split('<TABLE>');
+        let split = sheet.split('<TABLE>');
+        if (split.length < 2) {
+            return '';
+        }
         let title = split[0];
         // But we're not done yet, because these titles have a bunch of indent space at the start.
         // First we separate by line breaks

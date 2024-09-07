@@ -1,8 +1,10 @@
-import { Page } from 'puppeteer';
+import { ElementHandle, Page } from 'puppeteer';
 import { ScheduleOfInvestments } from './ten-q-objects.js';
-import { TypeTwoOne } from './type-two-one.js';
-import { TypeTwoZero } from './type-two-zero.js';
-import { TypeOne } from './type-one.js';
+import { TitleFinder } from './steps/title-finder.js';
+import { CategoryFinder } from './steps/category-finder.js';
+
+const titleFinder = new TitleFinder();
+const categoryFinder = new CategoryFinder();
 
 /**
  * A class which will handle choosing which variation to try parsing with.
@@ -22,28 +24,41 @@ export default class TenQUtility {
         // console.log(`Parsing link ${link}`);
         await page.goto(link, { waitUntil: 'networkidle0' });
 
-        // What I figured out here is sometimes we have an organized htm file,
-        // using tags in an organized way.
-        // If we don't have that, THAT'S where the heavy lifting comes in.
-
-        // 1. Try parsing as organized HTM
-        // 2. If that fails, we parse as text document.
-
-        let typeOne = new TypeOne();
-        let typeTwoZero = new TypeTwoZero();
-        let typeTwoOne = new TypeTwoOne();
-
-        let htmResults = await typeTwoZero.parseDocument(page);
-        // console.log(htmResults);
-        if (htmResults === null || htmResults.length == 0) {
-            htmResults = await typeOne.parseHtm(page);
+        // First off, we want to know if it's the ultimate edge case - barebones.
+        let preHandle = page.$('body > pre');
+        if (preHandle != null) {
+            return await this.parseBarebones(page, preHandle);
         }
-        if (htmResults === null || htmResults.length == 0) {
-            // console.log(`%cNO RESULTS FOUND IN LINK ${link}`, 'color: red;');
-            return [];
+    }
+
+    /**
+     * Handled separately because we don't deal with handles
+     * after the pre tag.
+     * @param {Page} page 
+     * @param {ElementHandle} preHandle 
+     * @returns {Promise<ScheduleOfInvestments[]>} a list of a schedule of investments.
+     */
+    async parseBarebones(page, preHandle) {
+        let docContent = await page.evaluate(
+            (handle) => handle.textContent,
+            preHandle,
+        );
+        // Now we have a string with all the doc content.
+        // We split it into a String[] with all pages
+        // And we call it 'sheets' to avoid confusion
+        let sheets = docContent.split('<PAGE>');
+
+        // We check every page for a schedule
+        for (let i = 0; i < sheets.length; i++) {
+            // If a schedule is found, we proceed.
+            let title = titleFinder.barebones(sheets[i]);
+            // We check if the title has what we want.
+            // If it doesn't, onto the next iteration.
+            if (!titleFinder.titleValid(title)) {
+                continue;
+            }
+            let date = titleFinder.date;
+            let categoryInfo = categoryFinder.barebones(sheets[i]);
         }
-        // console.log(`%c ${htmResults}`, 'color: orange');
-        console.log(`%cRESULTS FOUND IN ${link}`, 'color: green;');
-        return htmResults;
     }
 }
