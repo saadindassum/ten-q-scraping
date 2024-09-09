@@ -1,10 +1,12 @@
 import { ElementHandle, Page } from 'puppeteer';
-import { ScheduleOfInvestments } from './ten-q-objects.js';
+import { CategoryInfo, ScheduleOfInvestments } from './ten-q-objects.js';
 import { TitleFinder } from './steps/title-finder.js';
 import { CategoryFinder } from './steps/category-finder.js';
+import { CellScanner } from './steps/cell-scanner.js';
 
 const titleFinder = new TitleFinder();
 const categoryFinder = new CategoryFinder();
+const cellScanner = new CellScanner();
 
 /**
  * A class which will handle choosing which variation to try parsing with.
@@ -29,6 +31,7 @@ export default class TenQUtility {
         if (preHandle != null) {
             return await this.parseBarebones(page, preHandle);
         }
+        return null;
     }
 
     /**
@@ -49,6 +52,7 @@ export default class TenQUtility {
         let sheets = docContent.split('<PAGE>');
 
         // We check every page for a schedule
+        let scheduleList = new Array();
         for (let i = 0; i < sheets.length; i++) {
             // If a schedule is found, we proceed.
             let title = titleFinder.barebones(sheets[i]);
@@ -59,6 +63,10 @@ export default class TenQUtility {
             }
             let date = titleFinder.date;
             let categoryInfo = categoryFinder.barebones(sheets[i]);
+            let data = cellScanner.barebones(sheets[i], categoryInfo);
+            let sched = new ScheduleOfInvestments(title, date, categoryInfo.getCategories(), data);
+            scheduleList.push(sched);
         }
+        return scheduleList;
     }
 }

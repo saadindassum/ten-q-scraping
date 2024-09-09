@@ -1,8 +1,10 @@
 import { ParsingUtility } from "../parsing-utility";
 import { AsciiCategoryInfo, CategoryInfo } from "../ten-q-objects";
 import { ParsingUtility } from "../parsing-utility";
+import { AsciiUtility } from "../ascii-parsing-utility";
 
 const parsingUtility = new ParsingUtility();
+const asciiUtility = new AsciiUtility();
 
 export class CategoryFinder {
     constructor() { }
@@ -20,7 +22,7 @@ export class CategoryFinder {
         // We're going to separate the table by lines.
         // We scan for the underlines, and use that to find table columns.
         // And voila, we have all the info we need to find table cells.
-        let table = sheet.split('<TABLE>')[1];
+        let table = asciiUtility.getTable(sheet);
         let lines = table.split(/\r?\n|\r/);
         let ulIndex = - 1;
         for (let i = 0; i < lines.length; i++) {
