@@ -1,72 +1,4 @@
 /**
- * Information about categories for an organized 10Q table.
- * @param {Number[]} indices
- * @param {String[]} categories
- */
-export class CategoryInfo {
-    map;
-
-    /**
-     * Information about categories for an organized 10Q table.
-     * @param {Number[]} indices
-     * @param {String[]} categories
-     * @param {Number} tdLength
-     */
-    constructor(indices, categories, tdLength) {
-        this.map = new Map();
-        this.map.set('categories', categories);
-        this.map.set('indices', indices);
-        this.tdLength = tdLength;
-    }
-
-    /**
-     * @returns {Number[]} An array of indices which have a category
-     */
-    getIndices() {
-        return this.map.get('indices');
-    }
-
-    /**
-     * 
-     * @param {Number} i
-     * @returns {Number} the category index at index i. 
-     */
-    indexAt(i) {
-        return this.map.get('indices')[i];
-    }
-
-    /**
-     * @returns {String[]} An array of categories.
-     */
-    getCategories() {
-        return this.map.get('categories');
-    }
-
-    /**
-     * 
-     * @param {Number} i 
-     * @returns {String} category at index i.
-     */
-    categoryAt(i) {
-        return this.map.get('categories')[i];
-    }
-
-    setCategoryAt(i, value) {
-        let catArray = this.map.get('categories');
-        catArray[i] = value;
-        this.map.set('categories', catArray);
-    }
-
-    /**
-     * 
-     * @returns {number} how many TD's were found in the row that stored categories.
-     */
-    getTdLength() {
-        return this.tdLength;
-    }
-}
-
-/**
  * All the info for a schedule of investments
  * AKA table.
  */
@@ -263,5 +195,154 @@ export class TenQCollection {
             str += form.toCsv();
         }
         return str;
+    }
+}
+
+/**
+ * Information about categories for an organized 10Q table.
+ * @param {Number[]} indices
+ * @param {String[]} categories
+ */
+export class CategoryInfo {
+    map;
+
+    /**
+     * Information about categories for an organized 10Q table.
+     * @param {Number[]} indices
+     * @param {String[]} categories
+     * @param {Number} tdLength
+     */
+    constructor(indices, categories, tdLength) {
+        this.map = new Map();
+        this.map.set('categories', categories);
+        this.map.set('indices', indices);
+        this.tdLength = tdLength;
+    }
+
+    /**
+     * @returns {Number[]} An array of indices which have a category
+     */
+    getIndices() {
+        return this.map.get('indices');
+    }
+
+    /**
+     * 
+     * @param {Number} i
+     * @returns {Number} the category index at index i. 
+     */
+    indexAt(i) {
+        return this.map.get('indices')[i];
+    }
+
+    /**
+     * @returns {String[]} An array of categories.
+     */
+    getCategories() {
+        return this.map.get('categories');
+    }
+
+    /**
+     * 
+     * @param {Number} i 
+     * @returns {String} category at index i.
+     */
+    categoryAt(i) {
+        return this.map.get('categories')[i];
+    }
+
+    setCategoryAt(i, value) {
+        let catArray = this.map.get('categories');
+        catArray[i] = value;
+        this.map.set('categories', catArray);
+    }
+
+    /**
+     * 
+     * @returns {number} how many TD's were found in the row that stored categories.
+     */
+    getTdLength() {
+        return this.tdLength;
+    }
+}
+
+/**
+ * Information about categories in a barebones 10Q table.
+ * @param {Number[]} indices
+ * @param {Number[]} lengths
+ * @param {String[]} categories
+ */
+export class AsciiCategoryInfo {
+    map;
+
+    /**
+     * Information about categories for an organized 10Q table.
+     * @param {Number[]} indices
+     * @param {String[]} categories
+     * @param {Number[]} lengths
+     */
+    constructor(indices, categories, lengths) {
+        this.map = new Map();
+        this.map.set('categories', categories);
+        this.map.set('indices', indices);
+        this.map.set('lengths', lengths);
+    }
+
+    /**
+     * @returns {Number[]} An array of the index of category columns within a string
+     */
+    getIndices() {
+        return this.map.get('indices');
+    }
+
+    /**
+     * 
+     * @returns {Number[]} the width of the category columns
+     */
+    getLengths() {
+        return this.map.get('lengths');
+    }
+
+    /**
+     * 
+     * @param {Number} i
+     * @returns {Number} the category index at index i. 
+     */
+    indexAt(i) {
+        return this.map.get('indices')[i];
+    }
+
+    /**
+     * @returns {String[]} An array of categories.
+     */
+    getCategories() {
+        return this.map.get('categories');
+    }
+
+    /**
+     * 
+     * @param {Number} i 
+     * @returns {String} category at index i.
+     */
+    categoryAt(i) {
+        return this.map.get('categories')[i];
+    }
+
+    setCategoryAt(i, value) {
+        let catArray = this.map.get('categories');
+        catArray[i] = value;
+        this.map.set('categories', catArray);
+    }
+
+    lengthAt(i) {
+        return this.map.get('length')[i];
+    }
+
+    /**
+     * 
+     * @returns {number} how many TD's were found in the row that stored categories.
+     */
+    getTdLength() {
+        return this.tdLength;
     }
 }
