@@ -17,17 +17,17 @@ async function main() {
 
   // This time around we're using clusters
   // That will speed things up.
-  const cluster = await Cluster.launch({
-    concurrency: Cluster.CONCURRENCY_CONTEXT,
-    maxConcurrency: 4,
-    timeout: 12000000,
-    puppeteerOptions: {
-      headless: false,
-      args: [`--window-size=${1920},${1080}`],
-    },
-  });
+  // const cluster = await Cluster.launch({
+  //   concurrency: Cluster.CONCURRENCY_CONTEXT,
+  //   maxConcurrency: 4,
+  //   timeout: 12000000,
+  //   puppeteerOptions: {
+  //     headless: false,
+  //     args: [`--window-size=${1920},${1080}`],
+  //   },
+  // });
 
-  await initCluster(cluster);
+  // await initCluster(cluster);
 
   // for (var i = 0; i < searches.length; i++) {
   //   let cik = searches[i];
@@ -54,8 +54,22 @@ async function main() {
   // cluster.queue('0001487428');
 
 
-  await cluster.idle();
-  await cluster.close();
+  // await cluster.idle();
+  // await cluster.close();
+
+  const browser = await puppeteer.launch(
+    {
+      headless: false,
+      args: [`--window-size=${1920},${1080}`],
+    }
+  );
+
+  const page = await browser.newPage();
+
+  await testPage(page, 'https://www.sec.gov/Archives/edgar/data/81955/000095015204004018/l06912ae10vq.txt');
+
+  await browser.close();
+
   console.log('%c Completed program!', 'color:green;');
 }
 
