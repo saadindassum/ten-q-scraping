@@ -1,5 +1,5 @@
-import { AsciiCategoryInfo } from "../ten-q-objects";
-import { AsciiUtility } from "../ascii-parsing-utility";
+import { AsciiCategoryInfo } from "../ten-q-objects.js";
+import { AsciiUtility } from "../ascii-parsing-utility.js";
 
 let asciiUtility = new AsciiUtility();
 

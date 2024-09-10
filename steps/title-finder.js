@@ -1,5 +1,5 @@
-import { ParsingUtility } from "../parsing-utility";
-import { AsciiUtility } from "../ascii-parsing-utility";
+import { ParsingUtility } from "../parsing-utility.js";
+import { AsciiUtility } from "../ascii-parsing-utility.js";
 
 var parsingUtility = new ParsingUtility();
 
