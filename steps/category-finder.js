@@ -1,6 +1,5 @@
 import { ParsingUtility } from "../parsing-utility";
 import { AsciiCategoryInfo, CategoryInfo } from "../ten-q-objects";
-import { ParsingUtility } from "../parsing-utility";
 import { AsciiUtility } from "../ascii-parsing-utility";
 
 const parsingUtility = new ParsingUtility();
