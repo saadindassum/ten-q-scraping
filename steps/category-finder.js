@@ -46,7 +46,7 @@ export class CategoryFinder {
         let temp = ulLine; // Because I'm afraid to mutate the thing.
         let strings = parsingUtility.splitBySpaces(temp);
         let lengths = new Array();
-        for (let i = 0; i < strings; i++) {
+        for (let i = 0; i < strings.length; i++) {
             if (strings[i].length > 0) {
                 lengths.push(strings[i].length);
             }
@@ -93,18 +93,23 @@ export class CategoryFinder {
             for (let j = 0; j < indices.length; j++) {
                 // Get the substring
                 let sub = lines[i].substring(indices[j], indices[j] + lengths[j]);
-
-                // First we try to concatenate, if that goes wrong it means
-                // we have no info.
-                try {
+                console.log(`j to index: ${j}:${indices[j]}`);
+                if (categories.length == j) {
+                    //This category is empty
+                    sub = parsingUtility.removeExtraSpaces(sub);
+                    categories.push(sub);
+                    console.log(`%c ${sub}`, 'color: yellow');
+                } else {
+                    // We concatenate, if that goes wrong it means
+                    // we have no info.
                     let category = categories[i] + sub;
                     category = parsingUtility.removeExtraSpaces(category);
                     categories[i] = category;
-                } catch (e) {
-                    categories.push(sub);
+                    console.log(`%c ${category}`, 'color: orange');
                 }
             }
         }
+        console.log(categories);
         return categories;
     }
 }
