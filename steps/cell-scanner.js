@@ -21,7 +21,7 @@ export class CellScanner {
         for (let row of lines) {
             let map = new Map();
             for (let i = 0; i < asciiInfo.getCategories().length; i++) {
-                cellData = asciiUtility.parseTd(row, asciiInfo.indexAt(i), asciiInfo.lengthAt(i));
+                let cellData = asciiUtility.parseTd(row, asciiInfo.indexAt(i), asciiInfo.lengthAt(i));
                 map.set(asciiInfo.categoryAt(i), cellData);
             }
             data.push(map);

@@ -12,7 +12,7 @@ export class ParsingUtility {
         let date;
         // console.log(`Date string: ${dateString}`);
         try {
-            
+            date = new Date(Date.parse());
         } catch (e) {
             return null;
         }

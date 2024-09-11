@@ -335,7 +335,7 @@ export class AsciiCategoryInfo {
     }
 
     lengthAt(i) {
-        return this.map.get('length')[i];
+        return this.map.get('lengths')[i];
     }
 
     /**

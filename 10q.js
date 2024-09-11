@@ -27,7 +27,7 @@ export default class TenQUtility {
         await page.goto(link, { waitUntil: 'networkidle0' });
 
         // First off, we want to know if it's the ultimate edge case - barebones.
-        let preHandle = page.$('body > pre');
+        let preHandle = await page.$('body > pre');
         if (preHandle != null) {
             return await this.parseBarebones(page, preHandle);
         }
@@ -61,6 +61,7 @@ export default class TenQUtility {
             if (!titleFinder.titleValid(title)) {
                 continue;
             }
+            // console.log(`%c ${title}`, 'color: green;');
             let date = titleFinder.date;
             let categoryInfo = categoryFinder.barebones(sheets[i]);
             let data = cellScanner.barebones(sheets[i], categoryInfo);

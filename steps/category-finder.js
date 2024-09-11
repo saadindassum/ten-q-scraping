@@ -26,7 +26,7 @@ export class CategoryFinder {
         let ulIndex = - 1;
         for (let i = 0; i < lines.length; i++) {
             if (lines[i].includes('---')) {
-                underlineIndex = i;
+                ulIndex = i;
                 break;
             }
         }
@@ -59,7 +59,7 @@ export class CategoryFinder {
      * @returns {Number[]} indices
      */
     findBarebonesUnderlineIndices(ulLine) {
-        let temp = ulLine; // Because I'm afraid to mutate the thing.
+        console.log(ulLine);
         let detect = true;
         let indices = new Array();
         for (let i = 0; i < ulLine.length; i++) {
@@ -67,10 +67,12 @@ export class CategoryFinder {
                 indices.push(i);
                 detect = false;
             }
-            if (ulLine.charAt(i) == /\s/g) {
+            if (ulLine.charAt(i) === ' ') {
                 detect = true;
             }
         }
+        // console.log(indices);
+        return indices;
     }
 
     /**
@@ -104,7 +106,6 @@ export class CategoryFinder {
                 }
             }
         }
-        console.log(categories);
         return categories;
     }
 }
