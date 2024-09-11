@@ -1,7 +1,9 @@
 import { AsciiCategoryInfo } from "../ten-q-objects.js";
 import { AsciiUtility } from "../ascii-parsing-utility.js";
+import { ParsingUtility } from "../parsing-utility.js";
 
 let asciiUtility = new AsciiUtility();
+let parsingUtility = new ParsingUtility();
 
 export class CellScanner {
     constructor() { }
@@ -18,10 +20,14 @@ export class CellScanner {
         // We basically have a row-by-row table
         // And our ascii info is the key to figuring out where data is
         let data = new Array();
-        for (let row of lines) {
+        for (let r = asciiInfo.getUlIndex() + 1; r < lines.length; r++) {
+            let row = lines[r];
             let map = new Map();
+            let ulIndex = asciiInfo.getUlIndex();
+            console.log(`UL i: ${ulIndex}`);
             for (let i = 0; i < asciiInfo.getCategories().length; i++) {
                 let cellData = asciiUtility.parseTd(row, asciiInfo.indexAt(i), asciiInfo.lengthAt(i));
+                cellData = parsingUtility.prepareStringForOutput(cellData);
                 map.set(asciiInfo.categoryAt(i), cellData);
             }
             data.push(map);

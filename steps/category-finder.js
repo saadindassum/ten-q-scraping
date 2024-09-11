@@ -33,7 +33,7 @@ export class CategoryFinder {
         let lengths = this.findBarebonesUnderlineLength(lines[ulIndex]);
         let indices = this.findBarebonesUnderlineIndices(lines[ulIndex]);
         let categories = this.findBarebonesCategories(table, indices, lengths);
-        let catInfo = new AsciiCategoryInfo(indices, categories, lengths);
+        let catInfo = new AsciiCategoryInfo(indices, categories, lengths, ulIndex);
         return catInfo;
     };
 
@@ -93,19 +93,19 @@ export class CategoryFinder {
             for (let j = 0; j < indices.length; j++) {
                 // Get the substring
                 let sub = lines[i].substring(indices[j], indices[j] + lengths[j]);
-                console.log(`j to index: ${j}:${indices[j]}`);
+                if (sub.includes('<') && sub.includes('>')) {
+                    break;
+                }
                 if (categories.length == j) {
                     //This category is empty
                     sub = parsingUtility.removeExtraSpaces(sub);
                     categories.push(sub);
-                    console.log(`%c ${sub}`, 'color: yellow');
                 } else {
                     // We concatenate, if that goes wrong it means
                     // we have no info.
-                    let category = categories[i] + sub;
+                    let category = categories[j] + ' ' + sub;
                     category = parsingUtility.removeExtraSpaces(category);
-                    categories[i] = category;
-                    console.log(`%c ${category}`, 'color: orange');
+                    categories[j] = category;
                 }
             }
         }

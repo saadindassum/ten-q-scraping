@@ -81,14 +81,13 @@ export class ScheduleOfInvestments {
             let note = row.get('note');
             if (note) {
                 str += note;
-                str += '\n';
                 continue;
             }
             for (let j = 0; j < this.categories.length; j++) {
                 str += row.get(this.categories[j]);
                 str += ',';
             }
-            str += '\n\n\n';
+            str += '\n';
         }
 
         // And that's pretty much it.
@@ -170,7 +169,7 @@ export class TenQDoc {
         str += `FILE DATE - ${this.fileDate}\n\n`;
         for (const schedule of this.schedules) {
             str += schedule.toCsv();
-            str += '\n';
+            str += '\n\n';
         }
         if (this.schedules.length < 1) {
             str += 'NO SCHEDULES FOUND\n';
@@ -194,6 +193,7 @@ export class TenQCollection {
         let str = '';
         for (const form of this.formList) {
             str += form.toCsv();
+            str += '\n\n\n';
         }
         return str;
     }
@@ -281,12 +281,18 @@ export class AsciiCategoryInfo {
      * @param {Number[]} indices
      * @param {String[]} categories
      * @param {Number[]} lengths
+     * @param {Number} ulIndex
      */
-    constructor(indices, categories, lengths) {
+    constructor(indices, categories, lengths, ulIndex) {
         this.map = new Map();
         this.map.set('categories', categories);
         this.map.set('indices', indices);
         this.map.set('lengths', lengths);
+        this.ulIndex = ulIndex;
+    }
+
+    getUlIndex() {
+        return this.ulIndex;
     }
 
     /**
