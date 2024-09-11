@@ -109,7 +109,6 @@ export class CategoryFinder {
                 }
             }
         }
-        console.log(categories);
         return categories;
     }
 }

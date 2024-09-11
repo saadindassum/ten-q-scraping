@@ -16,15 +16,19 @@ export class AsciiUtility {
     }
     
     /**
-     * 
+     * Parses entire area of a column, past the underline.
      * @param {String} row 
-     * @param {Number} catIndex
-     * @param {Number} catLength
-     * @param {Number} rangeIndex
+     * @param {AsciiCategoryInfo} asciiInfo
+     * @param {Number} index
      * @returns {String} data
      */
-    parseTd(row, catIndex, catLength) {
-        let sub = row.substring(catIndex, catIndex + catLength);
+    parseTd(row, asciiInfo, index) {
+        let sub;
+        if (index + 1 > asciiInfo.getIndices().length) {
+            sub = row.substring(asciiInfo.indexAt(index));
+        } else {
+            sub = row.substring(asciiInfo.indexAt(index), asciiInfo.indexAt(index + 1));
+        }
         sub = parsingUtility.removeExtraSpaces(sub);
         return sub;
     }
