@@ -186,6 +186,7 @@ export class TenQCollection {
      * @param {TenQDoc[]} formList 
      */
     constructor(cik, formList) {
+        this.cik = cik;
         this.formList = formList;
     }
 

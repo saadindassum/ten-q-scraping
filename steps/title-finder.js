@@ -32,7 +32,7 @@ export class TitleFinder {
     checkForDate(line) {
         let date = parsingUtility.getDate(line);
         if (date.toString() === 'Invalid Date') {
-            return null;
+            return;
         }
         this.date = date;
     }

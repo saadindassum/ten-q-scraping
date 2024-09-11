@@ -59,7 +59,6 @@ export class CategoryFinder {
      * @returns {Number[]} indices
      */
     findBarebonesUnderlineIndices(ulLine) {
-        console.log(ulLine);
         let detect = true;
         let indices = new Array();
         for (let i = 0; i < ulLine.length; i++) {
