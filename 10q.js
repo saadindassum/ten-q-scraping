@@ -1,5 +1,6 @@
 import { ElementHandle, Page } from 'puppeteer';
-import { CategoryInfo, ScheduleOfInvestments } from './ten-q-objects.js';
+import { CategoryInfo, ScheduleOfInvestments, ScheduleInfo } from './ten-q-objects.js';
+import { ScheduleFinder } from './steps/schedule-finder.js';
 import { TitleFinder } from './steps/title-finder.js';
 import { CategoryFinder } from './steps/category-finder.js';
 import { CellScanner } from './steps/cell-scanner.js';
@@ -7,6 +8,7 @@ import { CellScanner } from './steps/cell-scanner.js';
 const titleFinder = new TitleFinder();
 const categoryFinder = new CategoryFinder();
 const cellScanner = new CellScanner();
+const scheduleFinder = new ScheduleFinder();
 
 /**
  * A class which will handle choosing which variation to try parsing with.
@@ -31,7 +33,8 @@ export default class TenQUtility {
         if (preHandle != null) {
             return await this.parseBarebones(page, preHandle);
         }
-        return null;
+        
+        return await this.parseOrganized(page);
     }
 
     /**
@@ -69,5 +72,17 @@ export default class TenQUtility {
             scheduleList.push(sched);
         }
         return scheduleList;
+    }
+
+    /**
+     * For organized documents
+     * @param {Page} page 
+     * @returns {Promise<ScheduleOfInvestments[]>} a list of a schedule of investments.
+     */
+    async parseOrganized(page) {
+        // First we need info on all our schedules
+        let infos = await scheduleFinder.findSchedules(page);
+        console.log(infos);
+        return null;
     }
 }

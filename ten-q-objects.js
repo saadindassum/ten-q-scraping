@@ -1,3 +1,5 @@
+import { ElementHandle } from "puppeteer";
+
 /**
  * All the info for a schedule of investments
  * AKA table.
@@ -172,7 +174,7 @@ export class TenQDoc {
             str += '\n\n';
         }
         if (this.schedules.length < 1) {
-            str += 'NO SCHEDULES FOUND\n';
+            str += 'NO SCHEDULES FOUND';
         }
         return str;
     }
@@ -192,7 +194,8 @@ export class TenQCollection {
     toCsv() {
         let str = '';
         for (const form of this.formList) {
-            str += form.toCsv();
+            
+            str += form.toCsv();;
             str += '\n\n\n';
         }
         return str;
@@ -351,5 +354,24 @@ export class AsciiCategoryInfo {
      */
     getTdLength() {
         return this.tdLength;
+    }
+
+}
+
+export class ScheduleInfo {
+    /**
+     * 
+     * @param {ElementHandle} tableHandle 
+     * @param {String} title 
+     * @param {String} tagName 
+     * @param {Date} date 
+     * @param {Number} lastRowIndex the last row containing the title
+     */
+    constructor(tableHandle, title, tagName, date, lastRowIndex) {
+        this.tableHandle = tableHandle;
+        this.title = title;
+        this.tagName = tagName;
+        this.date = date;
+        this.lastRowIndex = lastRowIndex;
     }
 }

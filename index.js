@@ -17,26 +17,26 @@ async function main() {
 
   // This time around we're using clusters
   // That will speed things up.
-  // const cluster = await Cluster.launch({
-  //   concurrency: Cluster.CONCURRENCY_CONTEXT,
-  //   maxConcurrency: 4,
-  //   timeout: 12000000,
-  //   puppeteerOptions: {
-  //     headless: false,
-  //     args: [`--window-size=${1920},${1080}`],
-  //   },
-  // });
+  const cluster = await Cluster.launch({
+    concurrency: Cluster.CONCURRENCY_CONTEXT,
+    maxConcurrency: 4,
+    timeout: 12000000,
+    puppeteerOptions: {
+      headless: false,
+      args: [`--window-size=${1920},${1080}`],
+    },
+  });
 
-  // await initCluster(cluster);
+  await initCluster(cluster);
 
-  // for (var i = 0; i < searches.length; i++) {
-  //   let cik = searches[i];
-  //   //If we don't do this, we won't get any hits on EDGAR
-  //   while (cik.length < 10) {
-  //     cik = '0' + cik;
-  //   }
-  //   cluster.queue(cik);
-  // }
+  for (var i = 0; i < searches.length; i++) {
+    let cik = searches[i];
+    //If we don't do this, we won't get any hits on EDGAR
+    while (cik.length < 10) {
+      cik = '0' + cik;
+    }
+    cluster.queue(cik);
+  }
 
   // These have worked in the past
   // cluster.queue('0000017313');
@@ -54,10 +54,18 @@ async function main() {
   // cluster.queue('0001487428');
 
 
-  // await cluster.idle();
-  // await cluster.close();
+  await cluster.idle();
+  await cluster.close();
 
-  const browser = await puppeteer.launch(
+  console.log('%c Completed program!', 'color:green;');
+}
+
+/**
+ * 
+ * @param {String} url 
+ */
+async function test(url) {
+    const browser = await puppeteer.launch(
     {
       headless: false,
       args: [`--window-size=${1920},${1080}`],
@@ -66,11 +74,9 @@ async function main() {
 
   const page = await browser.newPage();
 
-  await testPage(page, 'https://www.sec.gov/Archives/edgar/data/81955/000095015204004018/l06912ae10vq.txt');
+  await testPage(page, url);
 
   await browser.close();
-
-  console.log('%c Completed program!', 'color:green;');
 }
 
 /**
@@ -131,24 +137,24 @@ async function getLines(filename) {
 async function testPage(page, url) {
   const tenQUtility = new TenQUtility();
   const schedules = await tenQUtility.parse10Q(page, url);
-  const tqDoc = new TenQDoc(Date.now(), schedules, url);
-  const collection = new TenQCollection('TEST', [tqDoc]);
-  try {
-    let outputString = collection.toCsv();
-    fs.writeFile(`./output/test.csv`, outputString, err => {
-      if (err) {
-        // console.error(err);
-      } else {
-        // file written successfully
-      }
-    });
-  } catch (e) {
-    // console.log(`%c ERROR AT CIK ${cik}`, 'color: red;');
-    // console.error(e);
-    let str = '';
-    str += e;
-    return false;
-  }
+  // const tqDoc = new TenQDoc(Date.now(), schedules, url);
+  // const collection = new TenQCollection('TEST', [tqDoc]);
+  // try {
+  //   let outputString = collection.toCsv();
+  //   fs.writeFile(`./output/test.csv`, outputString, err => {
+  //     if (err) {
+  //       // console.error(err);
+  //     } else {
+  //       // file written successfully
+  //     }
+  //   });
+  // } catch (e) {
+  //   // console.log(`%c ERROR AT CIK ${cik}`, 'color: red;');
+  //   // console.error(e);
+  //   let str = '';
+  //   str += e;
+  //   return false;
+  // }
 }
 
 /**
@@ -244,5 +250,5 @@ async function delay(time) {
 }
 
 
-
-main();
+test('https://www.sec.gov/Archives/edgar/data/17313/000001731324000058/cswc-20240630.htm');
+// main();

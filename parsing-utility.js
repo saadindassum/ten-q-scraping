@@ -208,4 +208,46 @@ export class ParsingUtility {
         }
         return (isSolid && overOne);
     }
+
+    /**
+     * Extracts text for TD handle of all known variations of Td
+     * @param {ElementHandle} tdHandle 
+     * @param {Page} page 
+     * @returns {Promise<String>}
+     */
+    async parseTd(tdHandle, page) {
+        let str = '';
+        let spanHandle = await tdHandle.$('span');
+        let bHandle = await tdHandle.$('b');
+        if (bHandle == null && spanHandle == null) {
+            str = await page.evaluate(
+                handle => handle.textContent,
+                tdHandle
+            );
+        } else if (spanHandle != null) {
+            // Span is not null
+            str = await page.evaluate(
+                handle => handle.textContent,
+                spanHandle
+            );
+        } else {
+            // B is not null
+            str = await page.evaluate(
+                handle => handle.textContent,
+                bHandle
+            );
+        }
+        if (str === '$') {
+            // In this case we don't want to strip it of alphanumerics
+            // We want to detect it. Let's return it.
+            return str;
+        }
+        let noSpace = str;
+        noSpace = this.removeNonAlphanumeric(noSpace);
+        // console.log(`NOSPACE:${noSpace}\nlength: ${noSpace.length}`);
+        if (noSpace.length == 0) {
+            return noSpace;
+        }
+        return str;
+    }
 }

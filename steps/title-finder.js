@@ -1,5 +1,6 @@
 import { ParsingUtility } from "../parsing-utility.js";
 import { AsciiUtility } from "../ascii-parsing-utility.js";
+import { ElementHandle, Page } from "puppeteer";
 
 var parsingUtility = new ParsingUtility();
 
@@ -10,6 +11,7 @@ export class TitleFinder {
     constructor() {
         this.scheduleTitle = '';
         this.date = null;
+        this.lastRowIndex = -1; // Intended so that we can continue from this row if the title was in the table
     }
 
     /**
@@ -70,5 +72,64 @@ export class TitleFinder {
         }
         title = parsingUtility.removeLineBreaks(title);
         return parsingUtility.removeExtraSpaces(title);
+    }
+
+    /**
+     * 
+     * @param {ElementHandle} handle 
+     * @param {Page} page 
+     * @param {String} tagName 
+     * @returns {Promise<String>} title
+     */
+    async findInHandle(handle, page, tagName) {
+        if (tagName === 'TABLE') {
+            return await this.findInTable(handle, page);
+        } else {
+            throw new Error('Unknown case. Could not find title');
+        }
+    }
+
+    /**
+     * 
+     * @param {ElementHandle} tableHandle 
+     * @param {Page} page 
+     */
+    async findInTable(tableHandle, page) {
+        const rows = await tableHandle.$$('tr');
+
+        let rowHandles = new Array();
+        for await (const rowHandle of rows) {
+            rowHandles.push(rowHandle);
+        }
+        let title = '';
+        let i = 0;
+        for (i; i < rowHandles.length; i++) {
+            const tds = await rowHandles[i].$$('td');
+            if (tds.length > 1) {
+                if (title.length != 0) {
+                    //This means we already went into the other
+                    //condition and are done reading the title.
+                    //So we are done with the row.
+                    break;
+                }
+                if (i != 0) {
+                    break;
+                }
+            }
+            else {
+                for await (const tdHandle of tds) {
+                    const spanHandle = await tdHandle.$('span');
+                    let str;
+                    str = await parsingUtility.parseTd(tdHandle, page);
+                    if (str.length != 0) {
+                        this.checkForDate(str);
+                        title += str;
+                        title += '\n';
+                    }
+                }
+            }
+        }
+        this.lastRowIndex = i;
+        return title;
     }
 }
