@@ -219,6 +219,7 @@ export class ParsingUtility {
         let str = '';
         let spanHandle = await tdHandle.$('span');
         let bHandle = await tdHandle.$('b');
+        let divHandle = await tdHandle.$('div > span');
         if (bHandle == null && spanHandle == null) {
             str = await page.evaluate(
                 handle => handle.textContent,
@@ -229,6 +230,11 @@ export class ParsingUtility {
             str = await page.evaluate(
                 handle => handle.textContent,
                 spanHandle
+            );
+        } else if (divHandle != null) {
+            str = await page.evaluate(
+                handle => handle.textContent,
+                divHandle
             );
         } else {
             // B is not null
@@ -249,5 +255,22 @@ export class ParsingUtility {
             return noSpace;
         }
         return str;
+    }
+
+    /**
+     * Parses the TD elements in the row, and returns true if none of them have text.
+     * @param {ElementHandle} rowHandle
+     * @param {Page} page
+     * @returns {Promise<Boolean>} Whether the row is empty or not
+     */
+    async rowBlank(rowHandle, page) {
+        const tds = await rowHandle.$$('td');
+        for await (const tdHandle of tds) {
+            const str = await this.parseTd(tdHandle, page);
+            if (str.length != 0) {
+                return false;
+            }
+        }
+        return true;
     }
 }

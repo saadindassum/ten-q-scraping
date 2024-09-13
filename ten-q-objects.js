@@ -361,17 +361,17 @@ export class AsciiCategoryInfo {
 export class ScheduleInfo {
     /**
      * 
-     * @param {ElementHandle} tableHandle 
+     * @param {ElementHandle} containerHandle 
      * @param {String} title 
      * @param {String} tagName 
      * @param {Date} date 
-     * @param {Number} lastRowIndex the last row containing the title
+     * @param {Number} dataIndex the first row containing data
      */
-    constructor(tableHandle, title, tagName, date, lastRowIndex) {
-        this.tableHandle = tableHandle;
+    constructor(containerHandle, title, tagName, date, dataIndex) {
+        this.containerHandle = containerHandle;
         this.title = title;
         this.tagName = tagName;
         this.date = date;
-        this.lastRowIndex = lastRowIndex;
+        this.dataIndex = dataIndex;
     }
 }

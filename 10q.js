@@ -1,5 +1,6 @@
 import { ElementHandle, Page } from 'puppeteer';
 import { CategoryInfo, ScheduleOfInvestments, ScheduleInfo } from './ten-q-objects.js';
+import { InfoToSchedule } from './steps/info-to-schedule.js'
 import { ScheduleFinder } from './steps/schedule-finder.js';
 import { TitleFinder } from './steps/title-finder.js';
 import { CategoryFinder } from './steps/category-finder.js';
@@ -9,6 +10,7 @@ const titleFinder = new TitleFinder();
 const categoryFinder = new CategoryFinder();
 const cellScanner = new CellScanner();
 const scheduleFinder = new ScheduleFinder();
+const infoToSchedule = new InfoToSchedule();
 
 /**
  * A class which will handle choosing which variation to try parsing with.
@@ -82,7 +84,9 @@ export default class TenQUtility {
     async parseOrganized(page) {
         // First we need info on all our schedules
         let infos = await scheduleFinder.findSchedules(page);
-        console.log(infos);
+        for (const scheduleInfo of infos) {
+            await infoToSchedule.convert(scheduleInfo, page);
+        }
         return null;
     }
 }

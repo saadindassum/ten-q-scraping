@@ -12,7 +12,6 @@ export class ScheduleFinder {
      * @returns {Promise<ScheduleInfo[]>}
      */
     async findSchedules(page) {
-        let schedules = new Array();
 
         // We have to find the containers for the title, going from broadest to least broad
         // We basically just go through every container case we know.
@@ -35,7 +34,7 @@ export class ScheduleFinder {
             }
             if (tagName === 'TABLE') {
                 // Case 1
-                let currentInfo = new ScheduleInfo(container, title, tagName, titleFinder.date, titleFinder.lastRowIndex);
+                let currentInfo = new ScheduleInfo(container, title, tagName, titleFinder.date, titleFinder.dataIndex);
                 infos.push(currentInfo);
             }
         }

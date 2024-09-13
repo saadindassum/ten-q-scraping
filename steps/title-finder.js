@@ -11,7 +11,7 @@ export class TitleFinder {
     constructor() {
         this.scheduleTitle = '';
         this.date = null;
-        this.lastRowIndex = -1; // Intended so that we can continue from this row if the title was in the table
+        this.dataIndex = -1; // Intended so that we can continue from this row if the title was in the table
     }
 
     /**
@@ -129,7 +129,7 @@ export class TitleFinder {
                 }
             }
         }
-        this.lastRowIndex = i;
+        this.dataIndex = i;
         return title;
     }
 }

@@ -77,6 +77,7 @@ async function test(url) {
   await testPage(page, url);
 
   await browser.close();
+  console.log(`%c FINISHED TEST!`, 'color: green');
 }
 
 /**
