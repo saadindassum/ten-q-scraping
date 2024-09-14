@@ -84,9 +84,11 @@ export default class TenQUtility {
     async parseOrganized(page) {
         // First we need info on all our schedules
         let infos = await scheduleFinder.findSchedules(page);
+        let schedules = new Array();
         for (const scheduleInfo of infos) {
-            await infoToSchedule.convert(scheduleInfo, page);
+            let sched = await infoToSchedule.convert(scheduleInfo, page);
+            schedules.push(sched);
         }
-        return null;
+        return schedules;
     }
 }

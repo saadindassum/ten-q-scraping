@@ -138,24 +138,20 @@ async function getLines(filename) {
 async function testPage(page, url) {
   const tenQUtility = new TenQUtility();
   const schedules = await tenQUtility.parse10Q(page, url);
-  // const tqDoc = new TenQDoc(Date.now(), schedules, url);
-  // const collection = new TenQCollection('TEST', [tqDoc]);
-  // try {
-  //   let outputString = collection.toCsv();
-  //   fs.writeFile(`./output/test.csv`, outputString, err => {
-  //     if (err) {
-  //       // console.error(err);
-  //     } else {
-  //       // file written successfully
-  //     }
-  //   });
-  // } catch (e) {
-  //   // console.log(`%c ERROR AT CIK ${cik}`, 'color: red;');
-  //   // console.error(e);
-  //   let str = '';
-  //   str += e;
-  //   return false;
-  // }
+  const tqDoc = new TenQDoc(Date.now(), schedules, url);
+  const collection = new TenQCollection('TEST', [tqDoc]);
+  try {
+    let outputString = collection.toCsv();
+    fs.writeFile(`./output/test.csv`, outputString, err => {
+      if (err) {
+        // console.error(err);
+      } else {
+        // file written successfully
+      }
+    });
+  } catch (e) {
+    console.error(e);
+  }
 }
 
 /**

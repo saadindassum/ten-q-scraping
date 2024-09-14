@@ -56,6 +56,6 @@ export class CatInfoScanner {
         if (categories.length == 0) {
             return null;
         }
-        return new CategoryInfo(indices, categories);
+        return new CategoryInfo(indices, categories, tds.length);
     }
 }
