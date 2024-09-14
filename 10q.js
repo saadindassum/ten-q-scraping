@@ -85,6 +85,7 @@ export default class TenQUtility {
         // First we need info on all our schedules
         let infos = await scheduleFinder.findSchedules(page);
         let schedules = new Array();
+        console.log(`%c ${infos.length} schedules found!`, 'color: yellow');
         for (const scheduleInfo of infos) {
             let sched = await infoToSchedule.convert(scheduleInfo, page);
             schedules.push(sched);

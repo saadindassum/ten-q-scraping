@@ -15,12 +15,14 @@ export class ScheduleFinder {
 
         // We have to find the containers for the title, going from broadest to least broad
         // We basically just go through every container case we know.
-        let containers = await page.$$('body > div > table');
-        if (containers == null) {
-            console.error('Failed to find schedule containers');
+        let containers = await page.$$('body > document > type > sequence > filename > description > text > div > table');
+        if (containers == null || containers.length == 0) {
+            containers = await page.$$('body > div > table');
+        }
+        if (containers == null || containers.length == 0) {
             throw new Error('Failed to find schedule containers');
         }
-
+        console.log(`Containers length: ${containers.length}`);
         // Here we store all the schedule infos we find.
         let infos = new Array();
         for await (const container of containers) {
@@ -30,8 +32,10 @@ export class ScheduleFinder {
             );
             let title = await titleFinder.findInHandle(container, page, tagName);
             if (!titleFinder.titleValid(title)) {
+                // console.error(`TITLE NOT VALID: ${title}`);
                 continue;
             }
+            console.log(`%c TITLE VALID`, 'color:green');
             if (tagName === 'TABLE') {
                 // Case 1
                 let currentInfo = new ScheduleInfo(container, title, tagName, titleFinder.date, titleFinder.dataIndex);

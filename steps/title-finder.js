@@ -104,6 +104,7 @@ export class TitleFinder {
         let title = '';
         let i = 0;
         for (i; i < rowHandles.length; i++) {
+            console.log(`looping!`);
             const tds = await rowHandles[i].$$('td');
             if (tds.length > 1) {
                 if (title.length != 0) {
@@ -113,6 +114,7 @@ export class TitleFinder {
                     break;
                 }
                 if (i != 0) {
+                    console.log(`break 2!`);
                     break;
                 }
             }

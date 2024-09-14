@@ -218,6 +218,7 @@ export class ParsingUtility {
     async parseTd(tdHandle, page) {
         let str = '';
         let spanHandle = await tdHandle.$('span');
+        let fontHandle = await tdHandle.$('font');
         let bHandle = await tdHandle.$('b');
         let divHandle = await tdHandle.$('div > span');
         if (bHandle == null && spanHandle == null) {
@@ -230,6 +231,11 @@ export class ParsingUtility {
             str = await page.evaluate(
                 handle => handle.textContent,
                 spanHandle
+            );
+        } else if (fontHandle != null) {
+            str = await page.evaluate(
+                handle => handle.textContent,
+                fontHandle
             );
         } else if (divHandle != null) {
             str = await page.evaluate(
