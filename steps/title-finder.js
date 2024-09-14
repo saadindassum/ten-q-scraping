@@ -22,7 +22,7 @@ export class TitleFinder {
     titleValid(ttl) {
         if (ttl.length == 0) return false;
         let lc = ttl.toLowerCase();
-        let includesWord = lc.includes ('schedule of investments') || lc.includes('schedule of portfolio investments');
+        let includesWord = lc.includes('schedule of investments') || lc.includes('schedule of portfolio investments');
         let shortEnough = lc.length < 550;
         return includesWord && shortEnough
     }
@@ -38,7 +38,7 @@ export class TitleFinder {
         }
         this.date = date;
     }
-    
+
     /**
      * For older documents stored in txt form.
      * Sets date if a date is found.
@@ -104,31 +104,28 @@ export class TitleFinder {
         let title = '';
         let i = 0;
         for (i; i < rowHandles.length; i++) {
-            console.log(`looping!`);
             const tds = await rowHandles[i].$$('td');
             if (tds.length > 1) {
+                // We want to know how many cells have data in them.
+                let count = await parsingUtility.countContent(tds, page);
                 if (title.length != 0) {
-                    //This means we already went into the other
-                    //condition and are done reading the title.
-                    //So we are done with the row.
-                    break;
-                }
-                if (i != 0) {
-                    console.log(`break 2!`);
-                    break;
-                }
-            }
-            else {
-                for await (const tdHandle of tds) {
-                    const spanHandle = await tdHandle.$('span');
-                    let str;
-                    str = await parsingUtility.parseTd(tdHandle, page);
-                    if (str.length != 0) {
-                        this.checkForDate(str);
-                        title += str;
-                        title += '\n';
+                    // This could mean either we are at categories.
+                    // But there are also title rows with more than 1 td.
+                    if (count > 1) {
+                        break;
                     }
                 }
+                if (i != 0) {
+                    if (count > 1) {
+                        break;
+                    }
+                }
+            }
+            let str = await parsingUtility.rowAsString(tds, page);
+            if (str.length > 0) {
+                title += str;
+                title += '\n';
+                this.checkForDate(str);
             }
         }
         this.dataIndex = i;

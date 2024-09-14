@@ -65,7 +65,7 @@ async function main() {
  * @param {String} url 
  */
 async function test(url) {
-    const browser = await puppeteer.launch(
+  const browser = await puppeteer.launch(
     {
       headless: false,
       args: [`--window-size=${1920},${1080}`],

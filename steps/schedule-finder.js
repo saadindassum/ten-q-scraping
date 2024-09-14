@@ -5,7 +5,7 @@ import { TitleFinder } from './title-finder.js';
 let titleFinder = new TitleFinder();
 
 export class ScheduleFinder {
-    constructor() {}
+    constructor() { }
 
     /**
      * @param {Page} page
@@ -35,7 +35,8 @@ export class ScheduleFinder {
                 // console.error(`TITLE NOT VALID: ${title}`);
                 continue;
             }
-            console.log(`%c TITLE VALID`, 'color:green');
+            console.log(`%c TITLE VALID:\n${title}`, 'color:green');
+            console.log(`Date: `, titleFinder.date.toString());
             if (tagName === 'TABLE') {
                 // Case 1
                 let currentInfo = new ScheduleInfo(container, title, tagName, titleFinder.date, titleFinder.dataIndex);

@@ -77,7 +77,7 @@ export class ParsingUtility {
     removeSpaces(rawString) {
         return rawString.split(/\s/g).join('');
     }
-    
+
     /**
      * 
      * @param {String} rawString 
@@ -133,8 +133,7 @@ export class ParsingUtility {
                 );
             } catch (e) { }
             // console.log(styleString);
-            if (this.stringHasUnderline(styleString))
-            {
+            if (this.stringHasUnderline(styleString)) {
                 return true;
             }
         }
@@ -158,8 +157,7 @@ export class ParsingUtility {
             return false;
         }
         console.log(styleString);
-        if (this.stringHasUnderline(styleString))
-        {
+        if (this.stringHasUnderline(styleString)) {
             return true;
         }
         return false;
@@ -278,5 +276,36 @@ export class ParsingUtility {
             }
         }
         return true;
+    }
+
+    /**
+     * 
+     * @param {ElementHandle} rowHandle 
+     * @param {Page} page 
+     * @returns {Promise<String>}
+     */
+    async rowAsString(tdHandles, page) {
+        let str = '';
+        for await (let td of tdHandles) {
+            str += await this.parseTd(td, page);
+        }
+        return str;
+    }
+
+    /**
+     * 
+     * @param {ElementHandle} tdHandles 
+     * @param {Page} page 
+     */
+    async countContent(tdHandles, page) {
+        let count = 0;
+        for await (let td of tdHandles) {
+            let str = await this.parseTd(td, page);
+            str = this.removeNonAlphanumeric(str);
+            if (str.length > 0) {
+                count++;
+            }
+        }
+        return count;
     }
 }
