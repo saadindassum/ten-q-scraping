@@ -83,34 +83,38 @@ export class InfoToSchedule {
             rowHandles.push(rowHandle);
         }
 
-        // We need to collect info until an underline is detected
-        let underlineDetected = false;
+        // We want to find the underline index
 
-        let categoryInfo;
+        let underlineDetected = false;
         while (!underlineDetected) {
             const blank = await parsingUtility.rowBlank(rowHandles[i], page);
-            if (!blank) {
-                if (categoryInfo == null) {
-                    categoryInfo = await catInfoScanner.scanRowForCategoryInfo(rowHandles[i], page);
-                    console.log(categoryInfo.getCategories());
-                } else {
-                    // This means we've already parsed some category info
-                    let newCategoryInfo = await catInfoScanner.scanRowForCategoryInfo(rowHandles[i], page);
-                    for (let c = 0; c < newCategoryInfo.getCategories.length; c++) {
-                        // C++. Ha.
-                        // Concatenation time
-                        let catName = categoryInfo.categoryAt(c);
-                        if (catName.length > 0 && newCategoryInfo.categoryAt(c).length != 0) {
-                            catName += ` ${newCategoryInfo.categoryAt(c)}`
-                            categoryInfo.setCategoryAt(c, catName);
-                        }
-                    }
-                    console.log(categoryInfo.getCategories());
-                }
-            }
             // Now we want to check for an underline.
             underlineDetected = await parsingUtility.rowHasUnderlines(rowHandles[i], page);
             i++;
+        }
+
+        // Now we scan upwards from the ul index
+        // Because all present categories will be at the last line.
+        let categoryInfo;
+        for (let uli = i -1; uli >= 0; uli--) {
+            if (categoryInfo == null) {
+                categoryInfo = await catInfoScanner.scanRowForCategoryInfo(rowHandles[uli], page);
+            } else {
+                // This means we've already parsed some category info
+                let newCategoryInfo = await catInfoScanner.scanRowForFromPreviousInfo(rowHandles[uli], categoryInfo, page);
+                if (newCategoryInfo == null) {
+                    continue;
+                }
+                for (let c = 0; c < categoryInfo.getCategories().length; c++) {
+                    // C++. Ha.
+                    // Concatenation time
+                    let catName = categoryInfo.categoryAt(c);
+                    if (catName.length > 0 && newCategoryInfo.categoryAt(c).length != 0) {
+                        catName = `${newCategoryInfo.categoryAt(c)} ${catName}`
+                        categoryInfo.setCategoryAt(c, catName);
+                    }
+                }
+            }
         }
 
         console.log(`%c ${categoryInfo.getCategories()}`, 'color: yellow');

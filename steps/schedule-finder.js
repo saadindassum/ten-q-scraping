@@ -36,8 +36,8 @@ export class ScheduleFinder {
                 // console.error(`TITLE NOT VALID: ${title}`);
                 continue;
             }
-            console.log(`%c TITLE VALID:\n${title}`, 'color:green');
-            console.log(`Date: `, titleFinder.date.toString());
+            // console.log(`%c TITLE VALID:\n${title}`, 'color:green');
+            // console.log(`Date: `, titleFinder.date.toString());
             if (tagName === 'TABLE') {
                 // Type Two
                 let currentInfo = new ScheduleInfo(container, title, tagName, titleFinder.date, titleFinder.dataIndex);

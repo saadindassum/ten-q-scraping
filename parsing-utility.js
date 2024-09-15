@@ -215,15 +215,18 @@ export class ParsingUtility {
      */
     async parseTd(tdHandle, page) {
         let str = '';
+        let pHandle = await tdHandle.$('p');
         let spanHandle = await tdHandle.$('span');
         let fontHandle = await tdHandle.$('font');
         let bHandle = await tdHandle.$('b');
         let divHandle = await tdHandle.$('div > span');
-        if (bHandle == null && spanHandle == null) {
+        if (pHandle == null && spanHandle == null && fontHandle == null && bHandle == null && divHandle == null) {
             str = await page.evaluate(
                 handle => handle.textContent,
                 tdHandle
             );
+        } else if (pHandle != null) {
+            return await this.parseP(pHandle, page);
         } else if (spanHandle != null) {
             // Span is not null
             str = await page.evaluate(
@@ -270,15 +273,21 @@ export class ParsingUtility {
     async parseP(pHandle, page) {
         let str = '';
         let bFontHandle = await pHandle.$('b > font');
-        if (bFontHandle == null) {
+        let fontHandle = await pHandle.$('font');
+        if (bFontHandle == null && fontHandle == null) {
             str = await page.evaluate(
                 (handle) => handle.textContent,
                 pHandle,
             );
-        } else {
+        } else if (bFontHandle != null) {
             str = await page.evaluate(
                 (handle) => handle.textContent,
                 bFontHandle,
+            );
+        } else {
+            str = await page.evaluate(
+                (handle) => handle.textContent,
+                fontHandle,
             );
         }
         str = this.removeExtraSpaces(str);

@@ -59,4 +59,28 @@ export class CatInfoScanner {
         }
         return new CategoryInfo(indices, categories, tds.length);
     }
+
+    /**
+     * 
+     * @param {ElementHandle} rowHandle 
+     * @param {CategoryInfo} categoryInfo
+     * @param {Page} page 
+     * @returns {Promise<CategoryInfo> | Promise<null>}
+     */
+    async scanRowForFromPreviousInfo(rowHandle, categoryInfo, page) {
+        const tds = await rowHandle.$$('td');
+        let categories = new Array();
+        let indices = new Array();
+        for await (const index of categoryInfo.getIndices()) {
+            let tdHandle = tds[index];
+            let str = await parsingUtility.parseTd(tdHandle, page);
+            indices.push(index);
+            str = parsingUtility.removeExtraSpaces(str);
+            categories.push(str);
+        }
+        if (categories.length == 0) {
+            return null;
+        }
+        return new CategoryInfo(indices, categories, tds.length);
+    }
 }
