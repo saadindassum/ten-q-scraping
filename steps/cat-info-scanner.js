@@ -49,6 +49,7 @@ export class CatInfoScanner {
             let str = await parsingUtility.parseTd(tdHandle, page);
             if (str.length != 0) {
                 indices.push(tdIndex);
+                str = parsingUtility.removeExtraSpaces(str);
                 categories.push(str);
             }
             tdIndex++;

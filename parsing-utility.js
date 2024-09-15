@@ -262,6 +262,30 @@ export class ParsingUtility {
     }
 
     /**
+     * Parses a handle for a P tag and its microvariations
+     * @param {ElementHandle} pHandle 
+     * @param {Page} page
+     * @returns {Promise<String>} text content.
+     */
+    async parseP(pHandle, page) {
+        let str = '';
+        let bFontHandle = await pHandle.$('b > font');
+        if (bFontHandle == null) {
+            str = await page.evaluate(
+                (handle) => handle.textContent,
+                pHandle,
+            );
+        } else {
+            str = await page.evaluate(
+                (handle) => handle.textContent,
+                bFontHandle,
+            );
+        }
+        str = this.removeExtraSpaces(str);
+        return str;
+    }
+
+    /**
      * Parses the TD elements in the row, and returns true if none of them have text.
      * @param {ElementHandle} rowHandle
      * @param {Page} page

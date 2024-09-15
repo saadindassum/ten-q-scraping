@@ -82,8 +82,11 @@ export class TitleFinder {
      * @returns {Promise<String>} title
      */
     async findInHandle(handle, page, tagName) {
+        // console.log(tagName);
         if (tagName === 'TABLE') {
             return await this.findInTable(handle, page);
+        } else if (tagName === 'DIV') {
+            return await this.findInDiv(handle, page);
         } else {
             throw new Error('Unknown case. Could not find title');
         }
@@ -93,6 +96,7 @@ export class TitleFinder {
      * 
      * @param {ElementHandle} tableHandle 
      * @param {Page} page 
+     * @returns {Promise<String>}
      */
     async findInTable(tableHandle, page) {
         const rows = await tableHandle.$$('tr');
@@ -129,6 +133,35 @@ export class TitleFinder {
             }
         }
         this.dataIndex = i;
+        title = parsingUtility.replaceCommas(title, ';');
+        return title;
+    }
+    
+    /**
+     * 
+     * @param {ElementHandle} divHandle 
+     * @param {Page} page 
+     * @returns {Promise<String>}
+     */
+    async findInDiv(divHandle, page) {
+        const pHandles = await divHandle.$$('div > p');
+        let title = '';
+        let date;
+
+        for (const pHandle of pHandles) {
+            const str = await parsingUtility.parseP(pHandle, page);
+            let noSpace = '';
+            if (str) {
+                noSpace = parsingUtility.removeNonAlphanumeric(str);
+            }
+            if (noSpace.length > 0 && !str.includes('Table of Contents')) {
+                title += str;
+                title += '\n';
+                //Because the date always comes last.
+                this.checkForDate(str);
+            }
+        }
+        title = parsingUtility.replaceCommas(title, ';');
         return title;
     }
 }
