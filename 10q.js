@@ -36,10 +36,9 @@ export default class TenQUtility {
             if (preHandle != null) {
                 return await this.parseBarebones(page, preHandle);
             }
-            
+
             return await this.parseOrganized(page);
         } catch (e) {
-            console.error(`Failed to parse link ${link}`);
             return [];
         }
     }

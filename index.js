@@ -29,13 +29,20 @@ async function main() {
 
   await initCluster(cluster);
 
+  let skipList = getSkipList();
+  console.log(`Skipping:\n${skipList}`);
+
   for (var i = 0; i < searches.length; i++) {
     let cik = searches[i];
     //If we don't do this, we won't get any hits on EDGAR
     while (cik.length < 10) {
       cik = '0' + cik;
     }
-    cluster.queue(cik);
+    if (!skipList.includes(cik)) {
+      cluster.queue(cik);
+    } else {
+      console.log(`%c Skipped ${cik}`, 'color: grey');
+    }
   }
 
   // These have worked in the past
@@ -99,6 +106,7 @@ async function initCluster(cluster) {
           // file written successfully
         }
       });
+      console.log(`%c Done parsing CIK ${cik}`, 'color: green');
     } catch (e) {
       let str = '';
       str += e;
@@ -108,6 +116,7 @@ async function initCluster(cluster) {
           str
         );
       } catch (e) { }
+      console.error(`%c Failed to parse CIK ${cik}`);
       return false;
     }
   });
@@ -245,6 +254,17 @@ async function parseEdgarSearch(page, cik) {
  */
 async function delay(time) {
   return new Promise(resolve => setTimeout(resolve, time));
+}
+
+function getSkipList() {
+  const testFolder = './output/';
+  let fileNames = new Array()
+  fs.readdirSync(testFolder).forEach(file => {
+    let str = `${file}`;
+    let split = str.split('.');
+    fileNames.push(split[0]);
+  });
+  return fileNames;
 }
 
 
