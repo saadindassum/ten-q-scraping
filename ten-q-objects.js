@@ -18,6 +18,7 @@ export class ScheduleOfInvestments {
         this.date = date;
         this.categories = categories;
         this.data = data;
+        this.hasData = this.categories.length > 0;
     }
 
     /**
@@ -158,6 +159,7 @@ export class TenQDoc {
         this.fileDate = fileDate;
         this.schedules = schedules;
         this.link = link;
+        this.hasData = this.schedules.length > 0;
     }
 
     /**
@@ -189,6 +191,12 @@ export class TenQCollection {
     constructor(cik, formList) {
         this.cik = cik;
         this.formList = formList;
+        this.hasData = false;
+        for (let form of formList) {
+            if (form.hasData) {
+                this.hasData = true;
+            }
+        }
     }
 
     toCsv() {

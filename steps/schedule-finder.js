@@ -23,7 +23,7 @@ export class ScheduleFinder {
         if (containers == null || containers.length == 0) {
             throw new Error('Failed to find schedule containers');
         }
-        console.log(`Containers length: ${containers.length}`);
+        // console.log(`Containers length: ${containers.length}`);
         // Here we store all the schedule infos we find.
         let infos = new Array();
         for await (const container of containers) {

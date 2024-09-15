@@ -87,7 +87,6 @@ export class InfoToSchedule {
 
         let underlineDetected = false;
         while (!underlineDetected) {
-            const blank = await parsingUtility.rowBlank(rowHandles[i], page);
             // Now we want to check for an underline.
             underlineDetected = await parsingUtility.rowHasUnderlines(rowHandles[i], page);
             i++;
@@ -117,11 +116,12 @@ export class InfoToSchedule {
             }
         }
 
-        console.log(`%c ${categoryInfo.getCategories()}`, 'color: yellow');
+        // console.log(`%c ${categoryInfo.getCategories()}`, 'color: yellow');
 
         let data = await dataScanner.scanTable(rowHandles, categoryInfo, i, page);
         // console.log(`%c GOT TO BOTTOM`, 'color: orange;');
         // console.log(`%c ${date.toISOString()}`, 'color: orange;');
+        console.log(`%c Successfully parsed barebones page ${page.url()}`, 'color:green');
         const sched = new ScheduleOfInvestments(title, date, categoryInfo.getCategories(), data);
         // console.log('\n\nDATA:\n', data[0].get('note'), '\n\n');
         // console.log(sched.toCsv());

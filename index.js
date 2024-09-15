@@ -88,6 +88,9 @@ async function initCluster(cluster) {
   await cluster.task(async ({ page, data: cik }) => {
     try {
       let documentCollection = await parseEdgarSearch(page, cik);
+      if (!documentCollection.hasData) {
+        throw new Error(`No data found in CIK ${cik}`);
+      }
       let outputString = documentCollection.toCsv();
       fs.writeFile(`./output/${cik}.csv`, outputString, err => {
         if (err) {
@@ -97,8 +100,6 @@ async function initCluster(cluster) {
         }
       });
     } catch (e) {
-      // console.log(`%c ERROR AT CIK ${cik}`, 'color: red;');
-      // console.error(e);
       let str = '';
       str += e;
       try {
@@ -247,5 +248,5 @@ async function delay(time) {
 }
 
 
-test('https://www.sec.gov/Archives/edgar/data/17313/000001731317000039/cswc-20170930x10q.htm');
-// main();
+// test('https://www.sec.gov/Archives/edgar/data/17313/000001731317000039/cswc-20170930x10q.htm');
+main();

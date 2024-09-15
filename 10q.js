@@ -28,15 +28,20 @@ export default class TenQUtility {
      */
     async parse10Q(page, link) {
         // console.log(`Parsing link ${link}`);
-        await page.goto(link, { waitUntil: 'networkidle0' });
+        try {
+            await page.goto(link, { waitUntil: 'networkidle0' });
 
-        // First off, we want to know if it's the ultimate edge case - barebones.
-        let preHandle = await page.$('body > pre');
-        if (preHandle != null) {
-            return await this.parseBarebones(page, preHandle);
+            // First off, we want to know if it's the ultimate edge case - barebones.
+            let preHandle = await page.$('body > pre');
+            if (preHandle != null) {
+                return await this.parseBarebones(page, preHandle);
+            }
+            
+            return await this.parseOrganized(page);
+        } catch (e) {
+            console.error(`Failed to parse link ${link}`);
+            return [];
         }
-        
-        return await this.parseOrganized(page);
     }
 
     /**
@@ -71,6 +76,7 @@ export default class TenQUtility {
             let categoryInfo = categoryFinder.barebones(sheets[i]);
             let data = cellScanner.barebones(sheets[i], categoryInfo);
             let sched = new ScheduleOfInvestments(title, date, categoryInfo.getCategories(), data);
+            console.log(`%c Successfully parsed barebones page ${page.url()}`, 'color:green');
             scheduleList.push(sched);
         }
         return scheduleList;
@@ -85,7 +91,7 @@ export default class TenQUtility {
         // First we need info on all our schedules
         let infos = await scheduleFinder.findSchedules(page);
         let schedules = new Array();
-        console.log(`%c ${infos.length} schedules found!`, 'color: yellow');
+        // console.log(`%c ${infos.length} schedules found!`, 'color: yellow');
         for (const scheduleInfo of infos) {
             let sched = await infoToSchedule.convert(scheduleInfo, page);
             schedules.push(sched);
