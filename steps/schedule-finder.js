@@ -20,6 +20,13 @@ export class ScheduleFinder {
             containers = await page.$$('body > div > table');
         }
         if (containers == null || containers.length == 0) {
+            containers = await page.$$('body > div > table');
+        }
+        if (containers == null || containers.length == 0) {
+            containers = await page.$$('body > div > table');
+        }
+        console.log(containers);
+        if (containers == null || containers.length == 0) {
             throw new Error('Failed to find schedule containers');
         }
         console.log(`Containers length: ${containers.length}`);
