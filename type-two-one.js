@@ -118,7 +118,7 @@ export class TypeTwoOne {
         while ((categoryInfo == null || date.toString() == 'Invalid Date') && i < rowHandles.length) {
             const blank = await this.rowBlank(rowHandles[i], page);
             if (!blank) {
-                if (date.toString() == 'Invalid Date') {
+                if (date.toString() == ' Date') {
                     let potentialDate = await this.extractScheduleDateFromRow(rowHandles[i], page);
                     if (potentialDate.toString() != 'Invalid Date') {
                         // console.log(`%c ${potentialDate.toISOString()}`, 'color: violet;');

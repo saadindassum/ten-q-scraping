@@ -12,7 +12,6 @@ export class ParsingUtility {
         let date;
         // console.log(`Date string: ${dateString}`);
         try {
-            dateString += 'Z';
             date = new Date(Date.parse(dateString));
         } catch (e) {
             return null;
@@ -38,6 +37,46 @@ export class ParsingUtility {
     removeNonAlphanumeric(rawString) {
         return rawString.replace(/[^a-zA-Z0-9]/g, '');
     };
+
+    removeExtraSpaces(rawString) {
+        let split = rawString.split(/\s/g);
+        return this.arrayToString(split);
+    }
+
+    /**
+     * 
+     * @param {String[]} arr 
+     * @returns {String} with only spaces between data.
+     */
+    arrayToString(arr) {
+        let output = '';
+        for (let i = 0; i < arr.length; i++) {
+            if (arr[i].length > 0) {
+                output += `${arr[i]} `;
+            }
+        }
+        // Output ends up with one extra ' ', which we remove.
+        output = output.slice(0, output.length - 1);
+        return output;
+    }
+
+    /**
+     * 
+     * @param {String} rawString 
+     * @returns {String[]}
+     */
+    splitBySpaces(rawString) {
+        return rawString.split(/\s/g);
+    }
+
+    /**
+    * Removes all spaces in a string
+    * @param {String} rawString 
+    * @returns {String}
+    */
+    removeSpaces(rawString) {
+        return rawString.split(/\s/g).join('');
+    }
 
     /**
      * 
@@ -94,8 +133,7 @@ export class ParsingUtility {
                 );
             } catch (e) { }
             // console.log(styleString);
-            if (this.stringHasUnderline(styleString))
-            {
+            if (this.stringHasUnderline(styleString)) {
                 return true;
             }
         }
@@ -119,8 +157,7 @@ export class ParsingUtility {
             return false;
         }
         console.log(styleString);
-        if (this.stringHasUnderline(styleString))
-        {
+        if (this.stringHasUnderline(styleString)) {
             return true;
         }
         return false;
@@ -168,5 +205,140 @@ export class ParsingUtility {
             } catch (e) { }
         }
         return (isSolid && overOne);
+    }
+
+    /**
+     * Extracts text for TD handle of all known variations of Td
+     * @param {ElementHandle} tdHandle 
+     * @param {Page} page 
+     * @returns {Promise<String>}
+     */
+    async parseTd(tdHandle, page) {
+        let str = '';
+        let pHandle = await tdHandle.$('p');
+        let spanHandle = await tdHandle.$('span');
+        let fontHandle = await tdHandle.$('font');
+        let bHandle = await tdHandle.$('b');
+        let divHandle = await tdHandle.$('div > span');
+        if (pHandle == null && spanHandle == null && fontHandle == null && bHandle == null && divHandle == null) {
+            str = await page.evaluate(
+                handle => handle.textContent,
+                tdHandle
+            );
+        } else if (pHandle != null) {
+            return await this.parseP(pHandle, page);
+        } else if (spanHandle != null) {
+            // Span is not null
+            str = await page.evaluate(
+                handle => handle.textContent,
+                spanHandle
+            );
+        } else if (fontHandle != null) {
+            str = await page.evaluate(
+                handle => handle.textContent,
+                fontHandle
+            );
+        } else if (divHandle != null) {
+            str = await page.evaluate(
+                handle => handle.textContent,
+                divHandle
+            );
+        } else {
+            // B is not null
+            str = await page.evaluate(
+                handle => handle.textContent,
+                bHandle
+            );
+        }
+        if (str === '$') {
+            // In this case we don't want to strip it of alphanumerics
+            // We want to detect it. Let's return it.
+            return str;
+        }
+        let noSpace = str;
+        noSpace = this.removeNonAlphanumeric(noSpace);
+        // console.log(`NOSPACE:${noSpace}\nlength: ${noSpace.length}`);
+        if (noSpace.length == 0) {
+            return noSpace;
+        }
+        return str;
+    }
+
+    /**
+     * Parses a handle for a P tag and its microvariations
+     * @param {ElementHandle} pHandle 
+     * @param {Page} page
+     * @returns {Promise<String>} text content.
+     */
+    async parseP(pHandle, page) {
+        let str = '';
+        let bFontHandle = await pHandle.$('b > font');
+        let fontHandle = await pHandle.$('font');
+        if (bFontHandle == null && fontHandle == null) {
+            str = await page.evaluate(
+                (handle) => handle.textContent,
+                pHandle,
+            );
+        } else if (bFontHandle != null) {
+            str = await page.evaluate(
+                (handle) => handle.textContent,
+                bFontHandle,
+            );
+        } else {
+            str = await page.evaluate(
+                (handle) => handle.textContent,
+                fontHandle,
+            );
+        }
+        str = this.removeExtraSpaces(str);
+        return str;
+    }
+
+    /**
+     * Parses the TD elements in the row, and returns true if none of them have text.
+     * @param {ElementHandle} rowHandle
+     * @param {Page} page
+     * @returns {Promise<Boolean>} Whether the row is empty or not
+     */
+    async rowBlank(rowHandle, page) {
+        const tds = await rowHandle.$$('td');
+        for await (const tdHandle of tds) {
+            const str = await this.parseTd(tdHandle, page);
+            if (str.length != 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 
+     * @param {ElementHandle} rowHandle 
+     * @param {Page} page 
+     * @returns {Promise<String>}
+     */
+    async rowAsString(tdHandles, page) {
+        let str = '';
+        for await (let td of tdHandles) {
+            str += await this.parseTd(td, page);
+        }
+        return str;
+    }
+
+    /**
+     * 
+     * @param {ElementHandle} tdHandles 
+     * @param {Page} page 
+     */
+    async countContent(tdHandles, page) {
+        let count = 0;
+        for await (let td of tdHandles) {
+            let str = await this.parseTd(td, page);
+            str = this.removeNonAlphanumeric(str);
+            if (str.length > 0) {
+                count++;
+            }
+        }
+        return count;
     }
 }

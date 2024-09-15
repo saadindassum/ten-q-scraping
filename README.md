@@ -16,3 +16,24 @@ Put your desired CIK numbers in the file searches.txt, then run the command
 ```
 node ./index.js
 ```
+
+## Broad Strokes Update
+
+We've done brute force for a while, and that's led us to a better understanding of these documents.
+Each schedule has a title, and a table. For now we're only going to look for the keyword "schedule of investments".
+For each step, we keep on adding variations, and cases where we decide what variation to go with.
+This approach is much more flexible. For example, if you have a type one TD on a type 2 document, the program
+should now parse that just fine, where as it would have been impossible with our previous approach.
+Any fixes to parsing will also apply to all sorts of parsing, speeding up the process.
+
+Oh, and did I mention running time will be much faster as well? Here are the steps to parse a 10Q for schedule, each step nested under the other for each schedule.
+
+1. Find all schedules in the document
+2. Identify the title which belongs to the table and contains the string "schedule of investments".
+3. Find the table.
+4. If file date was not found in the title, parse the date.
+5. If the file date was not found in the title, find the file date on the table.
+6. Parse category info (category names along with their column indices)
+7. Parse each row of the table.
+
+We'll implement these top to bottom, working on the worst/default case first. Worst case I can think of right now being an unparsed document where all text in a file is contained in a single p tag. Older 10Qs from '04 are good for finding these worst case scenarios.

@@ -29,14 +29,21 @@ async function main() {
 
   await initCluster(cluster);
 
-  // for (var i = 0; i < searches.length; i++) {
-  //   let cik = searches[i];
-  //   //If we don't do this, we won't get any hits on EDGAR
-  //   while (cik.length < 10) {
-  //     cik = '0' + cik;
-  //   }
-  //   cluster.queue(cik);
-  // }
+  let skipList = getSkipList();
+  console.log(`Skipping:\n${skipList}`);
+
+  for (var i = 0; i < searches.length; i++) {
+    let cik = searches[i];
+    //If we don't do this, we won't get any hits on EDGAR
+    while (cik.length < 10) {
+      cik = '0' + cik;
+    }
+    if (!skipList.includes(cik)) {
+      cluster.queue(cik);
+    } else {
+      console.log(`%c Skipped ${cik}`, 'color: grey');
+    }
+  }
 
   // These have worked in the past
   // cluster.queue('0000017313');
@@ -47,8 +54,8 @@ async function main() {
   // cluster.queue('0001099941');
 
   // Fix for maybe easy wins!
-  cluster.queue('0001515173'); //toISO problem, suspecting in date
-  cluster.queue('0001523526'); //toIso problem, suspecting in date
+  // cluster.queue('0001515173'); //toISO problem, suspecting in date
+  // cluster.queue('0001523526'); //toIso problem, suspecting in date
   // cluster.queue('0001143513');
   // cluster.quque('0001287750');
   // cluster.queue('0001487428');
@@ -56,7 +63,28 @@ async function main() {
 
   await cluster.idle();
   await cluster.close();
+
   console.log('%c Completed program!', 'color:green;');
+}
+
+/**
+ * 
+ * @param {String} url 
+ */
+async function test(url) {
+  const browser = await puppeteer.launch(
+    {
+      headless: false,
+      args: [`--window-size=${1920},${1080}`],
+    }
+  );
+
+  const page = await browser.newPage();
+
+  await testPage(page, url);
+
+  await browser.close();
+  console.log(`%c FINISHED TEST!`, 'color: green');
 }
 
 /**
@@ -67,6 +95,9 @@ async function initCluster(cluster) {
   await cluster.task(async ({ page, data: cik }) => {
     try {
       let documentCollection = await parseEdgarSearch(page, cik);
+      if (!documentCollection.hasData) {
+        throw new Error(`No data found in CIK ${cik}`);
+      }
       let outputString = documentCollection.toCsv();
       fs.writeFile(`./output/${cik}.csv`, outputString, err => {
         if (err) {
@@ -75,9 +106,8 @@ async function initCluster(cluster) {
           // file written successfully
         }
       });
+      console.log(`%c Done parsing CIK ${cik}`, 'color: green');
     } catch (e) {
-      // console.log(`%c ERROR AT CIK ${cik}`, 'color: red;');
-      // console.error(e);
       let str = '';
       str += e;
       try {
@@ -86,34 +116,11 @@ async function initCluster(cluster) {
           str
         );
       } catch (e) { }
+      console.error(`%c Failed to parse CIK ${cik}`);
       return false;
     }
   });
 }
-
-// /**
-//  * Opens a browser and scrapes EDGAR for information about a CIK
-//  * and writes found data to a csv file.
-//  * @param {String} cik
-//  * @param {Browser} browser
-//  * @returns {Promise<Boolean>} success or failure.
-//  */
-// async function scrapeCik(browser, cik) {
-//   // Launch the browser and open a new blank page
-//   console.log('Attempting to parse ', cik);
-//   try {
-//     let documentCollection = await parseEdgarSearch(browser, cik);
-//     let outputString = documentCollection.toCsv();
-//     fs.writeFileSync(
-//       `./output/${cik}.csv`,
-//       outputString
-//     );
-//   } catch (e) {
-//     console.error(e);
-//     return false;
-//   }
-//   return true;
-// }
 
 /**
  * Takes a filename outputs the file line by line as strings
@@ -131,6 +138,30 @@ async function getLines(filename) {
     lines.push(line);
   }
   return lines;
+}
+
+/**
+ * Outputs a CSV for a single page.
+ * @param {Page} page 
+ * @param {String} url 
+ */
+async function testPage(page, url) {
+  const tenQUtility = new TenQUtility();
+  const schedules = await tenQUtility.parse10Q(page, url);
+  const tqDoc = new TenQDoc(Date.now(), schedules, url);
+  const collection = new TenQCollection('TEST', [tqDoc]);
+  try {
+    let outputString = collection.toCsv();
+    fs.writeFile(`./output/test.csv`, outputString, err => {
+      if (err) {
+        // console.error(err);
+      } else {
+        // file written successfully
+      }
+    });
+  } catch (e) {
+    console.error(e);
+  }
 }
 
 /**
@@ -225,6 +256,17 @@ async function delay(time) {
   return new Promise(resolve => setTimeout(resolve, time));
 }
 
+function getSkipList() {
+  const testFolder = './output/';
+  let fileNames = new Array()
+  fs.readdirSync(testFolder).forEach(file => {
+    let str = `${file}`;
+    let split = str.split('.');
+    fileNames.push(split[0]);
+  });
+  return fileNames;
+}
 
 
+// test('https://www.sec.gov/Archives/edgar/data/17313/000001731317000039/cswc-20170930x10q.htm');
 main();
