@@ -88,6 +88,9 @@ export class ScheduleOfInvestments {
             }
             for (let j = 0; j < this.categories.length; j++) {
                 str += row.get(this.categories[j]);
+                if (str == null) {
+                    str = '';
+                }
                 str += ',';
             }
             str += '\n';

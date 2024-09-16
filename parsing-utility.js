@@ -329,7 +329,7 @@ export class ParsingUtility {
 
     /**
      * 
-     * @param {ElementHandle} tdHandles 
+     * @param {ElementHandle[]} tdHandles 
      * @param {Page} page 
      */
     async countContent(tdHandles, page) {
@@ -342,5 +342,23 @@ export class ParsingUtility {
             }
         }
         return count;
+    }
+
+    /**
+     * 
+     * @param {ElementHandle[]} tdHandles 
+     * @param {Page} page 
+     * @returns 
+     */
+    async detectSubtotalRow(tdHandles, page) {
+        for await (let td of tdHandles) {
+            let str = await this.parseTd(td, page);
+            str = str.toLowerCase();
+            if (str.includes('subtotal')) {
+                console.log('%c FOUND STRING', 'color:orange');
+                return true;
+            }
+        }
+        return false;
     }
 }

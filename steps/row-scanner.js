@@ -12,7 +12,7 @@ export class RowScanner {
      * @param {ElementHandle} rowHandle 
      * @param {CategoryInfo} categoryInfo 
      * @param {Page} page 
-     * @returns {Promise<Map>}
+     * @returns {Promise<Map<String, String>>}
      */
     async scanRowForData(rowHandle, categoryInfo, page) {
         let tds = await rowHandle.$$('td');
@@ -56,6 +56,7 @@ export class RowScanner {
             }
             // We format for output
             str = parsingUtility.prepareStringForOutput(str);
+            // console.log(`${categoryInfo.categoryAt(i)}: '${str}'`);
             map.set(
                 categoryInfo.categoryAt(i),
                 str
@@ -68,7 +69,6 @@ export class RowScanner {
             map = new Map();
             map.set('note', firstText);
         }
-        // console.log(map);
         return map;
     }
 
@@ -78,16 +78,20 @@ export class RowScanner {
      * @param {ElementHandle} rowHandle 
      * @param {CategoryInfo} categoryInfo 
      * @param {Page} page 
-     * @returns {Promise<Map>}
+     * @returns {Promise<Map<String, String>>}
      */
     async scanForNonMatchingCells(tdHandles, categoryInfo, page) {
-        let map = new Map();
+        let map = await this.scanForTotal(tdHandles, categoryInfo, page);
+        if (map != null) {
+            return map;
+        }
+        map = new Map();
         // This will help us see if the row stores a note and nothing else
         // If it does, we want to return a single key/value.
         let infoCount = 0;
 
         let firstText = '';
-        let indexOfFirst = -1;
+        let indexOfFirst = -1;        
 
         // Since we have the indices of every category, we're going
         // to iterate using those.
@@ -157,6 +161,7 @@ export class RowScanner {
             // We have to get rid of all commas
             str = parsingUtility.prepareStringForOutput(str);
             // Info or not, we add str to the map.
+            // console.log(`%c${categoryInfo.categoryAt(i)}: '${str}'`, 'color:pink');
             map.set(
                 categoryInfo.categoryAt(i),
                 str
@@ -170,6 +175,58 @@ export class RowScanner {
             map.set('note', firstText);
         }
         return map;
+    }
+
+    /**
+     * 
+     * @param {ElementHandle[]} tdHandles 
+     * @param {CategoryInfo} categoryInfo 
+     * @param {Page} page 
+     * @returns {Promise<Map<String, String>> | Promise<null>}
+     */
+    async scanForTotal(tdHandles, categoryInfo, page) {
+        try {
+            let map = new Map();
+            let contentCount = await parsingUtility.countContent(tdHandles, page);
+            // console.log(`%cContentCount: ${contentCount}`, 'color: grey');
+            let subtotalDetected = await parsingUtility.detectSubtotalRow(tdHandles, page);
+            if (contentCount == 2) {
+                // console.log(`%cENTERING CONDITION`, 'color: yellow');
+                // We're dealing with a total of cost and fair value, always the last two categories.
+                // All this code is doing is setting those last two categories to that content.
+                let categories = categoryInfo.getCategories();
+                let contentParsed = 0;
+                for (let i = 0; i < tdHandles.length; i++) {
+                    let str = await parsingUtility.parseTd(tdHandles[i], page);
+                    if (contentParsed < contentCount) {
+                        if (str != null && str.length > 0) {
+                            let subtraction = contentCount - contentParsed;
+                            let cat = categories[categories.length - subtraction + 1];
+                            str = parsingUtility.prepareStringForOutput(str);
+                            // console.log(`%c${cat}: ${str}`, 'color: orange');
+                            map.set(cat, str);
+                            contentParsed--;
+                        }
+                    } else {
+                        break;
+                    }
+                }
+                for (let i = categories.length - 1 - contentCount; i >= 0; i--) {
+                    let cat = categories[i];
+                    // console.log(`%c${cat}: '${''}'`, 'color: red');
+                    map.set(cat, '');
+                }
+                return map;
+            } else if (subtotalDetected) {
+                console.log('%cSUBTOTAL DETECTED', 'color; orange');
+                return null;
+            } else {
+                return null;
+            }
+        } catch (e) {
+            console.error(e);
+            return null;
+        }
     }
 
 }

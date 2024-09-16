@@ -15,10 +15,8 @@ export class ScheduleFinder {
 
         // We have to find the containers for the title, going from broadest to least broad
         // We basically just go through every container case we know. From least to most compatible
-        console.log('Scanning for type 2');
         let containers = await this.findTypeTwo(page);
         if (containers == null || containers.length == 0) {
-            console.log('Scanning for type 1');
             containers = await this.findTypeOne(page);
         }
         
