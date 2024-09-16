@@ -268,5 +268,5 @@ function getSkipList() {
 }
 
 
-// test('https://www.sec.gov/Archives/edgar/data/17313/000001731317000039/cswc-20170930x10q.htm');
-main();
+test('https://www.sec.gov/Archives/edgar/data/17313/000001731324000058/cswc-20240630.htm');
+// main();

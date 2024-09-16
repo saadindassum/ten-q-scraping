@@ -111,6 +111,8 @@ export class ParsingUtility {
     prepareStringForOutput(rawString) {
         let str = this.removeCommas(rawString);
         str = str.replace(/$/g, '');
+        //Remove non-ascii characters
+        str = str.split(/[^\x00-\x7F]/g).join('');
         str = this.removeLineBreaks(str);
         return str;
     }
