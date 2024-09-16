@@ -84,11 +84,12 @@ export class ScheduleOfInvestments {
             let note = row.get('note');
             if (note) {
                 str += note;
+                str += '\n';
                 continue;
             }
             for (let j = 0; j < this.categories.length; j++) {
                 str += row.get(this.categories[j]);
-                if (str == null) {
+                if (str == null || str.length == 0) {
                     str = '';
                 }
                 str += ',';

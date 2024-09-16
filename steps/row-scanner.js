@@ -67,6 +67,7 @@ export class RowScanner {
         if (infoCount < 2 && indexOfFirst == 0) {
             // console.log('NOTE DETECTED');
             map = new Map();
+            firstText = parsingUtility.prepareStringForOutput(firstText);
             map.set('note', firstText);
         }
         return map;
@@ -83,6 +84,10 @@ export class RowScanner {
     async scanForNonMatchingCells(tdHandles, categoryInfo, page) {
         let map = await this.scanForTotal(tdHandles, categoryInfo, page);
         if (map != null) {
+            // console.log('RETURNING TOTAL MAP');
+            // let categories = categoryInfo.getCategories();
+            // let length = categories.length;
+            // console.log(`${categories[length - 1]}: ${map.get(categories[length - 1])}`);
             return map;
         }
         map = new Map();
@@ -187,6 +192,7 @@ export class RowScanner {
     async scanForTotal(tdHandles, categoryInfo, page) {
         try {
             let map = new Map();
+            let categories = categoryInfo.getCategories();
             let contentCount = await parsingUtility.countContent(tdHandles, page);
             // console.log(`%cContentCount: ${contentCount}`, 'color: grey');
             let subtotalDetected = await parsingUtility.detectSubtotalRow(tdHandles, page);
@@ -194,11 +200,10 @@ export class RowScanner {
                 // console.log(`%cENTERING CONDITION`, 'color: yellow');
                 // We're dealing with a total of cost and fair value, always the last two categories.
                 // All this code is doing is setting those last two categories to that content.
-                let categories = categoryInfo.getCategories();
                 let contentParsed = 0;
                 for (let i = 0; i < tdHandles.length; i++) {
-                    let str = await parsingUtility.parseTd(tdHandles[i], page);
                     if (contentParsed < contentCount) {
+                        let str = await parsingUtility.parseTd(tdHandles[i], page);
                         if (str != null && str.length > 0) {
                             let subtraction = contentCount - contentParsed;
                             let cat = categories[categories.length - subtraction + 1];
@@ -218,8 +223,42 @@ export class RowScanner {
                 }
                 return map;
             } else if (subtotalDetected) {
-                console.log('%cSUBTOTAL DETECTED', 'color; orange');
-                return null;
+                if (contentCount == 3) {
+                    let contentParsed = 0;
+                    for await (let td of tdHandles) {
+                        let str = await parsingUtility.parseTd(td, page);
+                        if (str != null && str.length > 0) {
+                            let category = '';
+                            switch (contentParsed) {
+                                case 0:
+                                    category = categories[0];
+                                    break;
+                                case 1:
+                                    category = categories[categories.length - 2];
+                                    break;
+                                default:
+                                    category = categories[categories.length - 1];
+                                    break;
+                            }
+                            str = parsingUtility.prepareStringForOutput(str);
+                            // console.log(`%c${category}: ${str}`, 'color: orange');
+                            map.set(category, str);
+                            contentParsed++;
+                        }
+                        if (contentParsed >= 3) {
+                            break;
+                        }
+                    }
+                    // Now we set all unused categories to blank
+                    for (let i = 0; i < categories.length; i++) {
+                        if (i != 0 && i < categories.length - 2) {
+                            map.set(categories[i], '');
+                        }
+                    }
+                } else {
+                    throw new Error('Unimplemented case for subtotal');
+                }
+                return map;
             } else {
                 return null;
             }

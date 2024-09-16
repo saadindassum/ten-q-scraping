@@ -355,7 +355,6 @@ export class ParsingUtility {
             let str = await this.parseTd(td, page);
             str = str.toLowerCase();
             if (str.includes('subtotal')) {
-                console.log('%c FOUND STRING', 'color:orange');
                 return true;
             }
         }
