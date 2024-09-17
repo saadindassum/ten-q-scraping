@@ -28,19 +28,15 @@ export default class TenQUtility {
      */
     async parse10Q(page, link) {
         // console.log(`Parsing link ${link}`);
-        try {
-            await page.goto(link, { waitUntil: 'networkidle0' });
+        await page.goto(link, { waitUntil: 'networkidle0' });
 
-            // First off, we want to know if it's the ultimate edge case - barebones.
-            let preHandle = await page.$('body > pre');
-            if (preHandle != null) {
-                return await this.parseBarebones(page, preHandle);
-            }
-
-            return await this.parseOrganized(page);
-        } catch (e) {
-            return [];
+        // First off, we want to know if it's the ultimate edge case - barebones.
+        let preHandle = await page.$('body > pre');
+        if (preHandle != null) {
+            return await this.parseBarebones(page, preHandle);
         }
+
+        return await this.parseOrganized(page);
     }
 
     /**
