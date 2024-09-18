@@ -80,21 +80,23 @@ export class ScheduleOfInvestments {
         // Onto the data
         for (let i = 0; i < this.data.length; i++) {
             let row = this.data[i];
+            let rowStr = '';
             // We want to check for a note first
             let note = row.get('note');
             if (note) {
-                str += note;
-                str += '\n';
+                rowStr += note;
+                rowStr += '\n';
                 continue;
             }
             for (let j = 0; j < this.categories.length; j++) {
-                str += row.get(this.categories[j]);
-                if (str == null || str.length == 0) {
-                    str = '';
+                let cell = row.get(this.categories[j]);
+                if (cell == null || cell.length == 0) {
+                    cell = '';
                 }
-                str += ',';
+                cell += ',';
+                rowStr += cell;
             }
-            str += '\n';
+            str += `${rowStr}\n`;
         }
 
         // And that's pretty much it.

@@ -84,7 +84,6 @@ export class RowScanner {
     async scanForNonMatchingCells(tdHandles, categoryInfo, page) {
         let map = await this.scanForTotal(tdHandles, categoryInfo, page);
         if (map != null) {
-            // console.log('RETURNING TOTAL MAP');
             // let categories = categoryInfo.getCategories();
             // let length = categories.length;
             // console.log(`${categories[length - 1]}: ${map.get(categories[length - 1])}`);
@@ -142,7 +141,20 @@ export class RowScanner {
                             // console.error('SPSP$ DETECTED');
                             tdHandles.splice(i - 1, 2);
                         } else {
-                            // console.error('BLBL DETECTED');
+                            // console.error(`BLBL DETECTED in category ${categoryInfo.categoryAt(i)}`);
+                            // First check if it's a single column without data
+                            // If that's the case, we simply move onto the next category
+                            const nextCat = tdHandles[categoryInfo.indexAt(i + 1)];
+                            const hasInfo = await parsingUtility.countContent([nextCat], page);
+                            if (hasInfo) {
+                                // console.log('HAS INFO');
+                                // console.log(`%c${categoryInfo.categoryAt(i)}: ''`, 'color:purple');
+                                map.set(
+                                    categoryInfo.categoryAt(i),
+                                    '',
+                                );
+                                continue;
+                            }
                             // Pattern: two blanks in a row
                             // where data is supposed to be.
                             tdHandles.splice(i, 1);
@@ -198,6 +210,13 @@ export class RowScanner {
             let subtotalDetected = await parsingUtility.detectSubtotalRow(tdHandles, page);
             if (contentCount == 2) {
                 // console.log(`%cENTERING CONDITION`, 'color: yellow');
+
+                // First we want to make sure there are only numbers and no dates here.
+                let numbersOnly = await parsingUtility.numbersOnly(tdHandles, page);
+                if (!numbersOnly) {
+                    return null;
+                }
+
                 // We're dealing with a total of cost and fair value, always the last two categories.
                 // All this code is doing is setting those last two categories to that content.
                 let contentParsed = 0;
@@ -220,6 +239,19 @@ export class RowScanner {
                     let cat = categories[i];
                     // console.log(`%c${cat}: '${''}'`, 'color: red');
                     map.set(cat, '');
+                }
+                return map;
+            } else if (contentCount == 1) {
+                for (let i = 0; i < tdHandles.length; i++) {
+                    let str = await parsingUtility.parseTd(tdHandles[i], page);
+                    if (str != null && str.length > 0) {
+                        // Store it in the total
+                        let cat = categories[categories.length - 2];
+                        str = parsingUtility.prepareStringForOutput(str);
+                        // console.log(`%c${cat}: ${str}`, 'color: orange');
+                        map.set(cat, str);
+                        break;
+                    }
                 }
                 return map;
             } else if (subtotalDetected) {
@@ -250,11 +282,11 @@ export class RowScanner {
                         }
                     }
                     // Now we set all unused categories to blank
-                    for (let i = 0; i < categories.length; i++) {
-                        if (i != 0 && i < categories.length - 2) {
-                            map.set(categories[i], '');
-                        }
-                    }
+                    // for (let i = 0; i < categories.length; i++) {
+                    //     if (i != 0 && i < categories.length - 2) {
+                    //         map.set(categories[i], '');
+                    //     }
+                    // }
                 } else {
                     throw new Error('Unimplemented case for subtotal');
                 }

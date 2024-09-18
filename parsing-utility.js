@@ -25,7 +25,7 @@ export class ParsingUtility {
      * @returns {String} with commas removed
      */
     removeCommas(rawString) {
-        let result = rawString.replace(',', '');
+        let result = rawString.split(',').join('');
         return result;
     }
 
@@ -85,10 +85,6 @@ export class ParsingUtility {
      */
     removeLineBreaks(rawString) {
         return rawString.split(/\r?\n|\r/).join('');
-    }
-
-    removeCommas(rawString) {
-        return rawString.replace(/,/g, '');
     }
 
     replaceCommas(rawString, replacement) {
@@ -222,7 +218,7 @@ export class ParsingUtility {
         let fontHandle = await tdHandle.$('font');
         let bHandle = await tdHandle.$('b');
         let divHandle = await tdHandle.$('div > span');
-        if (pHandle == null && spanHandle == null && fontHandle == null && bHandle == null && divHandle == null) {
+        if (pHandle == null && spanHandle == null && fontHandle == null && bHandle == null && divHandle == null && ixHandle == null) {
             str = await page.evaluate(
                 handle => handle.textContent,
                 tdHandle
@@ -252,7 +248,7 @@ export class ParsingUtility {
                 bHandle
             );
         }
-        if (str === '$') {
+        if (str === '$' || str === '—') {
             // In this case we don't want to strip it of alphanumerics
             // We want to detect it. Let's return it.
             return str;
@@ -345,6 +341,25 @@ export class ParsingUtility {
     }
 
     /**
+     * Checks if a row has numbers only
+     * @param {ElementHandle[]} tdHandles 
+     * @param {Page} page 
+     */
+    async numbersOnly(tdHandles, page) {
+        // console.log('Checking numbers only!');
+        for (let td of tdHandles) {
+            let str = await this.parseTd(td, page);
+            str = this.removeCommas(str);
+            let toNumber = Number(str);
+            if (toNumber.toString() === 'NaN') {
+                console.error(`%c FOUND NaN! Str: ${str}`, 'color:orange');
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * 
      * @param {ElementHandle[]} tdHandles 
      * @param {Page} page 
@@ -354,7 +369,7 @@ export class ParsingUtility {
         for await (let td of tdHandles) {
             let str = await this.parseTd(td, page);
             str = str.toLowerCase();
-            if (str.includes('subtotal')) {
+            if (str.includes('subtotal:') || str.includes('total:')) {
                 return true;
             }
         }

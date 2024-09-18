@@ -55,6 +55,9 @@ export class InfoToSchedule {
             }
             i++;
         }
+        if (categoryInfo.getCategories().length != 8) {
+            throw new Error('Unimplemented: Mismatching number of categories!');
+        }
 
         let data = await dataScanner.scanTable(rowHandles, categoryInfo, i, page);
 
@@ -114,6 +117,9 @@ export class InfoToSchedule {
                     }
                 }
             }
+        }
+        if (categoryInfo.getCategories().length != 8) {
+            throw new Error('Unimplemented: Mismatching number of categories!');
         }
 
         // console.log(`%c ${categoryInfo.getCategories()}`, 'color: yellow');

@@ -18,6 +18,8 @@ export class ScheduleFinder {
         let containers = await this.findTypeTwo(page);
         if (containers == null || containers.length == 0) {
             containers = await this.findTypeOne(page);
+        } else {
+            console.log('Found type 2');
         }
         
         if (containers == null || containers.length == 0) {
