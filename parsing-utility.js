@@ -218,7 +218,7 @@ export class ParsingUtility {
         let fontHandle = await tdHandle.$('font');
         let bHandle = await tdHandle.$('b');
         let divHandle = await tdHandle.$('div > span');
-        if (pHandle == null && spanHandle == null && fontHandle == null && bHandle == null && divHandle == null && ixHandle == null) {
+        if (pHandle == null && spanHandle == null && fontHandle == null && bHandle == null && divHandle == null) {
             str = await page.evaluate(
                 handle => handle.textContent,
                 tdHandle
