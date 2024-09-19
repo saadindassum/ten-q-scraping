@@ -327,6 +327,7 @@ export class ParsingUtility {
      * 
      * @param {ElementHandle[]} tdHandles 
      * @param {Page} page 
+     * @returns {Number} 
      */
     async countContent(tdHandles, page) {
         let count = 0;
@@ -338,6 +339,25 @@ export class ParsingUtility {
             }
         }
         return count;
+    }
+
+    /**
+     * Retrieves all non-empty row content
+     * @param {ElementHandle[]} tdHandles 
+     * @param {Page} page 
+     * @returns {String[]} 
+     */
+    async retrieveRowContent(tdHandles, page) {
+        let arr = new Array();
+        for await (let td of tdHandles) {
+            let str = await this.parseTd(td, page);
+            let noSpace = str;
+            noSpace = this.removeNonAlphanumeric(noSpace);
+            if (noSpace > 0) {
+                arr.push(str);
+            }
+        }
+        return arr;
     }
 
     /**
