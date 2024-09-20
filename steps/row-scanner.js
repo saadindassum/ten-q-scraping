@@ -16,6 +16,7 @@ export class RowScanner {
      */
     async scanRowForData(rowHandle, categoryInfo, page) {
         let tds = await rowHandle.$$('td');
+        tds = await parsingUtility.removeDisplayNones(tds, page);
         if (tds.length == categoryInfo.tdLength) {
             return await this.scanForMatchingCells(tds, categoryInfo, page);
         }
@@ -82,6 +83,7 @@ export class RowScanner {
      * @returns {Promise<Map<String, String>>}
      */
     async scanForNonMatchingCells(tdHandles, categoryInfo, page) {
+        console.log(`%cCatInfo length: ${categoryInfo.tdLength}`, 'color:orange');
         let map = await this.scanForTotal(tdHandles, categoryInfo, page);
         if (map != null) {
             // let categories = categoryInfo.getCategories();
@@ -120,6 +122,7 @@ export class RowScanner {
                 // that td from our array, then go back.
                 // console.error('$ DETECTED');
                 tdHandles.splice(i, 1);
+                console.log(`%cTD length: ${tdHandles.length}`, `color: ${tdHandles.length >= categoryInfo.tdLength ? 'yellow' : 'red'}`);
                 i--;
                 continue;
             }
@@ -140,6 +143,7 @@ export class RowScanner {
                             // We're supposed to land in the middle one.
                             // console.error('SPSP$ DETECTED');
                             tdHandles.splice(i - 1, 2);
+                            console.log(`%cTD length: ${tdHandles.length}`, `color: ${tdHandles.length >= categoryInfo.tdLength ? 'yellow' : 'red'}`);
                         } else {
                             // console.error(`BLBL DETECTED in category ${categoryInfo.categoryAt(i)}`);
                             // First check if it's a single column without data
@@ -158,6 +162,7 @@ export class RowScanner {
                             // Pattern: two blanks in a row
                             // where data is supposed to be.
                             tdHandles.splice(i, 1);
+                            console.log(`%cTD length: ${tdHandles.length}`, `color: ${tdHandles.length >= categoryInfo.tdLength ? 'yellow' : 'red'}`);
                         }
                         i--;
                         continue;

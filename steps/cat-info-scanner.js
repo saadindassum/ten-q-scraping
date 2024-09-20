@@ -41,7 +41,10 @@ export class CatInfoScanner {
      * @returns {Promise<CategoryInfo> | Promise<null>}
      */
     async scanRowForCategoryInfo(rowHandle, page) {
-        const tds = await rowHandle.$$('td');
+        let tds = await rowHandle.$$('td');
+        console.log(`Before: ${tds}`);
+        tds = await parsingUtility.removeDisplayNones(tds, page);
+        console.log(`After: ${tds}`);
         let categories = new Array();
         let indices = new Array();
         let tdIndex = 0;
@@ -68,7 +71,10 @@ export class CatInfoScanner {
      * @returns {Promise<CategoryInfo> | Promise<null>}
      */
     async scanRowForFromPreviousInfo(rowHandle, categoryInfo, page) {
-        const tds = await rowHandle.$$('td');
+        let tds = await rowHandle.$$('td');
+        console.log(`Before: ${tds}`);
+        tds = await parsingUtility.removeDisplayNones(tds, page);
+        console.log(`After: ${tds}`);
         let categories = new Array();
         let indices = new Array();
         for await (const index of categoryInfo.getIndices()) {

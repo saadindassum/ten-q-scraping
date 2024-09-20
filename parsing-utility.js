@@ -327,7 +327,7 @@ export class ParsingUtility {
      * 
      * @param {ElementHandle[]} tdHandles 
      * @param {Page} page 
-     * @returns {Number} 
+     * @returns {Promise<Number>} 
      */
     async countContent(tdHandles, page) {
         let count = 0;
@@ -345,7 +345,7 @@ export class ParsingUtility {
      * Retrieves all non-empty row content
      * @param {ElementHandle[]} tdHandles 
      * @param {Page} page 
-     * @returns {String[]} 
+     * @returns {Promise<String[]>} 
      */
     async retrieveRowContent(tdHandles, page) {
         let arr = new Array();
@@ -380,10 +380,10 @@ export class ParsingUtility {
     }
 
     /**
-     * 
+     * Removes any non-displaying handles from an array of TD's.
      * @param {ElementHandle[]} tdHandles 
      * @param {Page} page 
-     * @returns 
+     * @returns {Promise<ElementHandle[]>}
      */
     async detectSubtotalRow(tdHandles, page) {
         for await (let td of tdHandles) {
@@ -394,5 +394,29 @@ export class ParsingUtility {
             }
         }
         return false;
+    }
+
+    /**
+     * Takes a list of TD's and removes any of them that have display:none
+     * @param {ElementHandle[]} tdHandles 
+     * @param {Page} page 
+     */
+    async removeDisplayNones(tdHandles, page) {
+        let cleanArr = new Array();
+        for (let td of tdHandles) {
+            let styleString;
+            styleString = await page.evaluate(
+                el => el.getAttribute("style"),
+                td
+            );
+            if (styleString == null) {
+                console.error('stylestring null');
+                continue;
+            }
+            if (!styleString.includes('display:none') && !styleString.includes('display: none')) {
+                cleanArr.push(td);
+            }
+        }
+        return cleanArr;
     }
 }
