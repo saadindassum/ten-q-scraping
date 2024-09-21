@@ -1,4 +1,4 @@
-import { ScheduleInfo, CategoryInfo } from "../ten-q-objects.js";
+import { ScheduleInfo, CategoryInfo, Colspan } from "../ten-q-objects.js";
 import { ParsingUtility } from "../parsing-utility.js";
 import { ElementHandle, Page } from "puppeteer";
 
@@ -42,25 +42,44 @@ export class CatInfoScanner {
      */
     async scanRowForCategoryInfo(rowHandle, page) {
         let tds = await rowHandle.$$('td');
-        console.log(`Before: ${tds}`);
+        let colTotal = 0;
+        let colspans = new Array();
         tds = await parsingUtility.removeDisplayNones(tds, page);
-        console.log(`After: ${tds}`);
         let categories = new Array();
         let indices = new Array();
         let tdIndex = 0;
         for await (const tdHandle of tds) {
+
+            // First we get span info
+            let span = await page.evaluate(
+                el => el.getAttribute('colspan'),
+                tdHandle,
+            );
+
+            if (span == null) {
+                span = 0;
+            } else {
+                span = parseInt(span);
+            }
+            let spanObj = new Colspan(colTotal, span);
+            console.log(spanObj.span);
+            colTotal += span;
+            // We only add the colspan to the array when running into a category.
+            
+
             let str = await parsingUtility.parseTd(tdHandle, page);
             if (str.length != 0) {
                 indices.push(tdIndex);
                 str = parsingUtility.removeExtraSpaces(str);
                 categories.push(str);
+                colspans.push(spanObj);
             }
             tdIndex++;
         }
         if (categories.length == 0) {
             return null;
         }
-        return new CategoryInfo(indices, categories, tds.length);
+        return new CategoryInfo(indices, categories, tds.length, colTotal, colspans);
     }
 
     /**

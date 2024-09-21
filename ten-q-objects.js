@@ -13,7 +13,7 @@ export class ScheduleOfInvestments {
      * @param {String[]} categories 
      * @param {Map<String, String>[]} data
      */
-    constructor(title, date, categories, data) {
+    constructor(title, date, categories, data, colTotal, colspans) {
         this.title = title;
         this.date = date;
         this.categories = categories;
@@ -229,12 +229,16 @@ export class CategoryInfo {
      * @param {Number[]} indices
      * @param {String[]} categories
      * @param {Number} tdLength
+     * @param {Number} colTotal the length of all colspans
+     * @param {Colspan[]} colspans colspans of categories
      */
-    constructor(indices, categories, tdLength) {
+    constructor(indices, categories, tdLength, coltotal, colspans) {
         this.map = new Map();
         this.map.set('categories', categories);
         this.map.set('indices', indices);
         this.tdLength = tdLength;
+        this.colTotal = coltotal;
+        this.colspans = colspans;
     }
 
     /**
@@ -273,6 +277,10 @@ export class CategoryInfo {
         let catArray = this.map.get('categories');
         catArray[i] = value;
         this.map.set('categories', catArray);
+    }
+
+    colspanAt(i) {
+        return this.colspans[i];
     }
 
     /**
@@ -387,5 +395,17 @@ export class ScheduleInfo {
         this.tagName = tagName;
         this.date = date;
         this.dataIndex = dataIndex;
+    }
+}
+
+export class Colspan {
+    /**
+     * 
+     * @param {Number} index of the colspan within the table
+     * @param {Number} span of the colspan
+     */
+    constructor(index, span) {
+        this.index = index;
+        this.span = span;
     }
 }
