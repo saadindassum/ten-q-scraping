@@ -419,4 +419,23 @@ export class ParsingUtility {
         }
         return cleanArr;
     }
+
+    /**
+     * 
+     * @param {ElementHandle} tdHandle 
+     * @param {Page} page 
+     */
+    async getColspan(tdHandle, page) {
+        let span = await page.evaluate(
+            el => el.getAttribute('colspan'),
+            tdHandle,
+        );
+
+        if (span == null) {
+            span = 0;
+        } else {
+            span = parseInt(span);
+        }
+        return span;
+    }
 }

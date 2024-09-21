@@ -50,20 +50,12 @@ export class CatInfoScanner {
         let tdIndex = 0;
         for await (const tdHandle of tds) {
 
-            // First we get span info
-            let span = await page.evaluate(
-                el => el.getAttribute('colspan'),
-                tdHandle,
-            );
-
-            if (span == null) {
-                span = 0;
-            } else {
-                span = parseInt(span);
-            }
+            // First we deal with span info
+            let span = await parsingUtility.getColspan(tdHandle, page);
             let spanObj = new Colspan(colTotal, span);
-            console.log(spanObj.span);
+            // console.log(spanObj.span);
             colTotal += span;
+            // console.log(`Total: ${colTotal}`);
             // We only add the colspan to the array when running into a category.
             
 
