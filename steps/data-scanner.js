@@ -26,13 +26,13 @@ export class DataScanner {
             if (blank) {
                 continue;
             }
-            let rowData = await rowScanner.scanRowForData(rowHandles[i], categoryInfo, companyMemory, page);
+            let rowData = await rowScanner.scanRowForData(rowHandles[i], categoryInfo, page);
             if (rowData.get(categoryInfo.categoryAt(0)) == null || rowData.get(categoryInfo.categoryAt(0)).length == 0) {
-                console.error(`Empty company found - replacing with ${companyMemory}`);
+                // console.error(`Empty company found - replacing with ${companyMemory}`);
                 rowData.set(categoryInfo.categoryAt(0), companyMemory);
             } else {
                 companyMemory = rowData.get(categoryInfo.categoryAt(0));
-                console.log(`%cCompany memory set to ${companyMemory}`, 'color:green');
+                // console.log(`%cCompany memory set to ${companyMemory}`, 'color:green');
             }
             data.push(rowData);
         }
