@@ -469,7 +469,7 @@ export class ParsingUtility {
             console.log()
             throw new Error('COL LENGTH AND ARR LENGTH DO NOT MATCH');
         }
-        console.log(`ColArray: ${arr}`);
+        // console.log(`ColArray: ${arr}`);
         return arr;
     }
 }
