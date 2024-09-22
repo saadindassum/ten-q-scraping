@@ -262,6 +262,115 @@ export class ParsingUtility {
         return str;
     }
 
+/**
+     * Extracts text for TD handle of all known variations of Td
+     * @param {ElementHandle} tdHandle 
+     * @param {Page} page 
+     * @returns {Promise<String>}
+     */
+    async parseTd(tdHandle, page) {
+        let str = '';
+        let pHandle = await tdHandle.$('p');
+        let spanHandle = await tdHandle.$('span');
+        let fontHandle = await tdHandle.$('font');
+        let bHandle = await tdHandle.$('b');
+        let divHandle = await tdHandle.$('div > span');
+        if (pHandle == null && spanHandle == null && fontHandle == null && bHandle == null && divHandle == null) {
+            str = await page.evaluate(
+                handle => handle.textContent,
+                tdHandle
+            );
+        } else if (pHandle != null) {
+            return await this.parseP(pHandle, page);
+        } else if (spanHandle != null) {
+            // Span is not null
+            str = await page.evaluate(
+                handle => handle.textContent,
+                spanHandle
+            );
+        } else if (fontHandle != null) {
+            str = await page.evaluate(
+                handle => handle.textContent,
+                fontHandle
+            );
+        } else if (divHandle != null) {
+            str = await page.evaluate(
+                handle => handle.textContent,
+                divHandle
+            );
+        } else {
+            // B is not null
+            str = await page.evaluate(
+                handle => handle.textContent,
+                bHandle
+            );
+        }
+        if (str === '$' || str === '—') {
+            // In this case we don't want to strip it of alphanumerics
+            // We want to detect it. Let's return it.
+            return str;
+        }
+        let noSpace = str;
+        noSpace = this.removeNonAlphanumeric(noSpace);
+        // console.log(`NOSPACE:${noSpace}\nlength: ${noSpace.length}`);
+        if (noSpace.length == 0) {
+            return noSpace;
+        }
+        return str;
+    }
+
+    /**
+     * Extracts footnotes from a TD. Returns '' if none found.
+     * @param {ElementHandle} tdHandle 
+     * @param {Page} page 
+     * @returns {Promise<String>}
+     */
+    async parseFootnotes(tdHandle, page) {
+        let str = '';
+        //We have to find some tag that there are two or more of
+        let pHandles = await tdHandle.$$('p');
+        let spanHandles = await tdHandle.$$('span');
+        let fontHandles = await tdHandle.$$('font');
+        let bHandles = await tdHandle.$$('b');
+        let divHandles = await tdHandle.$$('div > span');
+        if (pHandles.length == 2) {
+            str = await page.evaluate(
+                handle => handle.textContent,
+                pHandles[1]
+            );
+        } else if (spanHandles.length > 1) {
+            // Span is not null
+            str = await page.evaluate(
+                handle => handle.textContent,
+                spanHandles[1]
+            );
+        } else if (fontHandles.length > 1) {
+            str = await page.evaluate(
+                handle => handle.textContent,
+                fontHandles[1]
+            );
+        } else if (bHandles.length > 1) {
+            str = await page.evaluate(
+                handle => handle.textContent,
+                bHandles[1]
+            );
+        } else if (divHandles.length > 1) {
+            str = await page.evaluate(
+                handle => handle.textContent,
+                divHandles[1]
+            );
+        } else {
+            return '';
+        }
+        let noSpace = str;
+        noSpace = this.removeNonAlphanumeric(noSpace);
+        // console.log(`NOSPACE:${noSpace}\nlength: ${noSpace.length}`);
+        if (noSpace.length == 0) {
+            return noSpace;
+        }
+        return str;
+    }
+
     /**
      * Parses a handle for a P tag and its microvariations
      * @param {ElementHandle} pHandle 

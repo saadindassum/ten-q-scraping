@@ -14,7 +14,7 @@ export class DataScanner {
      * @param {ElementHandle[]} rowHandles 
      * @param {CategoryInfo} categoryInfo
      * @param {Number} dataStartIndex 
-     * @returns {Promise<Map<String, String>>} Table data
+     * @returns {Promise<Map<String, any>>} Table data
      */
     async scanTable(rowHandles, categoryInfo, dataStartIndex, page) {
         // Now, we make an array of data retrieved from the table.

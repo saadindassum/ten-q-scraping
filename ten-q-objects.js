@@ -11,7 +11,7 @@ export class ScheduleOfInvestments {
      * @param {String} title
      * @param {Date} date 
      * @param {String[]} categories 
-     * @param {Map<String, String>[]} data
+     * @param {Map<String, any>[]} data
      */
     constructor(title, date, categories, data, colTotal, colspans) {
         this.title = title;
@@ -45,7 +45,6 @@ export class ScheduleOfInvestments {
         for (const bit of splitTitle) {
             //We want to check that we're not adding
             //the date
-            let maybeDate;
             let datesEqual = false;
             try {
                 let dateString = bit + 'Z';
@@ -74,6 +73,8 @@ export class ScheduleOfInvestments {
         for (let i = 0; i < this.categories.length; i++) {
             str += this.categories[i];
             str += ','
+            str += `${this.categories[i]} Footnotes`;
+            str += ',';
         }
         str += '\n';
 
@@ -88,11 +89,17 @@ export class ScheduleOfInvestments {
                 rowStr += '\n';
                 continue;
             }
+            let footnotes = row.get('footnotes');
             for (let j = 0; j < this.categories.length; j++) {
                 let cell = row.get(this.categories[j]);
                 if (cell == null || cell.length == 0) {
                     cell = '';
                 }
+                cell += ',';
+                rowStr += cell;
+
+                // Footnotes will be the same length as the category
+                cell = footnotes[j];
                 cell += ',';
                 rowStr += cell;
             }
@@ -245,8 +252,8 @@ export class CategoryInfo {
         for (let i = 0; i < colspans.length; i++) {
             str += `${this.colspans[i].index}: ${this.categoryAt(i)}, `;
         }
-        console.log(`%c${str}`, 'color:orange');
-        console.log(`%cCol length: ${this.colTotal}`, 'color:orange');
+        // console.log(`%c${str}`, 'color:orange');
+        // console.log(`%cCol length: ${this.colTotal}`, 'color:orange');
     }
 
     /**

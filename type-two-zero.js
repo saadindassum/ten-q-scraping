@@ -172,7 +172,7 @@ export class TypeTwoZero {
      * @param {ElementHandle} rowHandle 
      * @param {CategoryInfo} categoryInfo 
      * @param {Page} page 
-     * @returns {Promise<Map<String, String>>}
+     * @returns {Promise<Map<String, any>>}
      */
     async getRowInfo(rowHandle, categoryInfo, page) {
         let map = new Map();

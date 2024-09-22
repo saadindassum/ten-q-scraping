@@ -12,14 +12,15 @@ export class RowScanner {
      * @param {ElementHandle} rowHandle 
      * @param {CategoryInfo} categoryInfo 
      * @param {Page} page 
-     * @returns {Promise<Map<String, String>>}
+     * @returns {Promise<Map<String, any>>}
      */
     async scanRowForData(rowHandle, categoryInfo, page) {
         let tds = await rowHandle.$$('td');
         tds = await parsingUtility.removeDisplayNones(tds, page);
         let colArr = await parsingUtility.rowAsColspan(tds, page);
-        console.log(`%cCol length: ${categoryInfo.colTotal}`, 'color: pink');
+        // console.log(`%cCol length: ${categoryInfo.colTotal}`, 'color: pink');
         let map = new Map();
+        let footnotes = new Array();
 
         // We will iterate through colspan indices
         for (let i = 0; i < categoryInfo.colspans.length; i++) {
@@ -40,7 +41,13 @@ export class RowScanner {
                 categoryInfo.categoryAt(i),
                 str
             );
+
+            // Deal with footnotes
+            let footnote = await this.parseSpanFootnotes(colArr, colIndex, span, page);
+            footnote = parsingUtility.prepareStringForOutput(footnote);
+            footnotes.push(footnote);
         }
+        map.set('footnotes', footnotes);
 
         return map;
     }
@@ -51,6 +58,7 @@ export class RowScanner {
      * @param {Number} cIndex 
      * @param {Number} span aka colspan in the HTML
      * @param {Page} page 
+     * @returns {Promise<String>} data
      */
     async parseColspan(colArr, cIndex, span, page) {
         let str = '';
@@ -59,6 +67,28 @@ export class RowScanner {
             if (td != null) {
                 // console.log(`%cTd: ${td}`, 'color:yellow');
                 let bit = await parsingUtility.parseTd(td, page);
+                bit = parsingUtility.removeExtraSpaces(bit);
+                str += bit;
+            }
+        }
+        return str;
+    }
+
+    /**
+     * 
+     * @param {ElementHandle[]} colArr 
+     * @param {Number} cIndex 
+     * @param {Number} span aka colspan in the HTML
+     * @param {Page} page 
+     * @returns {Promise<String>} footnotes
+     */
+    async parseSpanFootnotes(colArr, cIndex, span, page) {
+        let str = '';
+        for (let i = cIndex; i < cIndex + span; i++) {
+            let td = colArr[i];
+            if (td != null) {
+                // console.log(`%cTd: ${td}`, 'color:yellow');
+                let bit = await parsingUtility.parseFootnotes(td, page);
                 bit = parsingUtility.removeExtraSpaces(bit);
                 str += bit;
             }
