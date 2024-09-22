@@ -42,9 +42,11 @@ export class CatInfoScanner {
      */
     async scanRowForCategoryInfo(rowHandle, page) {
         let tds = await rowHandle.$$('td');
+        // God knows why they put display nones in here
+        // But they did. So we get rid of them.
+        tds = await parsingUtility.removeDisplayNones(tds, page);
         let colTotal = 0;
         let colspans = new Array();
-        tds = await parsingUtility.removeDisplayNones(tds, page);
         let categories = new Array();
         let indices = new Array();
         let tdIndex = 0;
@@ -83,9 +85,6 @@ export class CatInfoScanner {
      */
     async scanRowForFromPreviousInfo(rowHandle, categoryInfo, page) {
         let tds = await rowHandle.$$('td');
-        console.log(`Before: ${tds}`);
-        tds = await parsingUtility.removeDisplayNones(tds, page);
-        console.log(`After: ${tds}`);
         let categories = new Array();
         let indices = new Array();
         for await (const index of categoryInfo.getIndices()) {

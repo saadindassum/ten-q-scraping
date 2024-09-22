@@ -432,10 +432,44 @@ export class ParsingUtility {
         );
 
         if (span == null) {
-            span = 0;
+            span = 1;
         } else {
             span = parseInt(span);
         }
         return span;
+    }
+
+    /**
+     * Returns a handle where the index of a handle is its column index
+     * @param {ElementHandle[]} tdHandles 
+     * @param {Page} page
+     * @returns {Promise<ElementHandle[]>} 
+     */
+    async rowAsColspan(tdHandles, page) {
+        let colLength = 0;
+        let arr = new Array();
+        for (let td of tdHandles) {
+            let span = await this.getColspan(td, page);
+            colLength += span;
+            // We have the index and we have the td
+            while (arr.length < colLength) {
+                if (span == 1) {
+                    arr.push(td);
+                } else {
+                    if (arr.length == colLength - span) {
+                        // This means we're at the index where the TD is found
+                        arr.push(td);
+                    } else {
+                        arr.push(null);
+                    }
+                }
+            }
+        }
+        if (colLength != arr.length) {
+            console.log()
+            throw new Error('COL LENGTH AND ARR LENGTH DO NOT MATCH');
+        }
+        console.log(`ColArray: ${arr}`);
+        return arr;
     }
 }

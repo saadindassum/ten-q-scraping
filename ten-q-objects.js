@@ -239,6 +239,14 @@ export class CategoryInfo {
         this.tdLength = tdLength;
         this.colTotal = coltotal;
         this.colspans = colspans;
+
+        // Debug logs
+        let str = '';
+        for (let i = 0; i < colspans.length; i++) {
+            str += `${this.colspans[i].index}: ${this.categoryAt(i)}, `;
+        }
+        console.log(`%c${str}`, 'color:orange');
+        console.log(`%cCol length: ${this.colTotal}`, 'color:orange');
     }
 
     /**
