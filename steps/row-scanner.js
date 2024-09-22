@@ -44,6 +44,7 @@ export class RowScanner {
 
             // Deal with footnotes
             let footnote = await this.parseSpanFootnotes(colArr, colIndex, span, page);
+            footnote = parsingUtility.replaceCommas(footnote, ';');
             footnote = parsingUtility.prepareStringForOutput(footnote);
             footnotes.push(footnote);
         }
