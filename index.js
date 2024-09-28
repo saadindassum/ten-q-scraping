@@ -334,9 +334,14 @@ function getFilingSkipSet(cik) {
 /**
  * 
  * @param {String} url 
+ * @param {String} cik
  */
-function addFilingToSkipList(url) {
-  fs.appendFileSync(`./production/${cik}/skiplist.txt`, `${url}\n`);
+function addFilingToSkipList(url, cik) {
+  let dir = `./production/${cik}/`;
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir);
+  }
+  fs.appendFileSync(dir + 'skiplist.txt', `${url}\n`);
 }
 
 /**
@@ -403,7 +408,7 @@ async function pushthroughEdgarSearch(page, cik) {
     } catch (e) { }
     // We add a delay because this seems to be the most intensive
     // fetch, and where the SEC's most likely to block us.
-    await delay(1000);
+    await delay(250);
   }
 
   // And now we have a full list of 10Q links!
@@ -414,9 +419,13 @@ async function pushthroughEdgarSearch(page, cik) {
     const schedules = await tenQUtility.parse10Q(page, links[i]);
     // console.log(`Schedules in: ${schedules}`);
     const form = new TenQDoc(fileDates[i], schedules, links[i]);
+    addFilingToSkipList(links[i], cik);
     // Now we make a document for this filing.
-    fs.writeFileSync(`./production/${cik}/${fileDates[i]}.csv`, form.toCsv());
-    addFilingToSkipList(links[i]);
+    fs.writeFileSync(
+      `./production/${cik}/${fileDates[i]}.csv`,
+      form.toCsv(),
+    );
+    addFilingToSkipList(links[i], cik);
     console.log(`%cParsed!`, 'color:green');
   }
 
