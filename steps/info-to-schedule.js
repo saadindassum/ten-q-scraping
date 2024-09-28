@@ -9,7 +9,7 @@ const catInfoScanner = new CatInfoScanner();
 const dataScanner = new DataScanner();
 
 export class InfoToSchedule {
-    constructor() {}
+    constructor() { }
 
     /**
      * 
@@ -55,9 +55,9 @@ export class InfoToSchedule {
             }
             i++;
         }
-        if (categoryInfo.getCategories().length != 8) {
-            throw new Error('Unimplemented: Mismatching number of categories!');
-        }
+        // if (categoryInfo.getCategories().length != 8) {
+        //     throw new Error('Unimplemented: Mismatching number of categories!');
+        // }
 
         let data = await dataScanner.scanTable(rowHandles, categoryInfo, i, page);
 
@@ -98,12 +98,12 @@ export class InfoToSchedule {
         // Now we scan upwards from the ul index
         // Because all present categories will be at the last line.
         let categoryInfo;
-        for (let uli = i -1; uli >= 0; uli--) {
+        for (let uli = i - 1; uli >= 0; uli--) {
             if (categoryInfo == null) {
                 categoryInfo = await catInfoScanner.scanRowForCategoryInfo(rowHandles[uli], page);
             } else {
                 // This means we've already parsed some category info
-                let newCategoryInfo = await catInfoScanner.scanRowForFromPreviousInfo(rowHandles[uli], categoryInfo, page);
+                let newCategoryInfo = await catInfoScanner.scanRowFromPreviousInfo(rowHandles[uli], categoryInfo, page);
                 if (newCategoryInfo == null) {
                     continue;
                 }

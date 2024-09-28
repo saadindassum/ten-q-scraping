@@ -59,7 +59,7 @@ export class CatInfoScanner {
             colTotal += span;
             // console.log(`Total: ${colTotal}`);
             // We only add the colspan to the array when running into a category.
-            
+
 
             let str = await parsingUtility.parseTd(tdHandle, page);
             if (str.length != 0) {
@@ -83,7 +83,7 @@ export class CatInfoScanner {
      * @param {Page} page 
      * @returns {Promise<CategoryInfo> | Promise<null>}
      */
-    async scanRowForFromPreviousInfo(rowHandle, categoryInfo, page) {
+    async scanRowFromPreviousInfo(rowHandle, categoryInfo, page) {
         let tds = await rowHandle.$$('td');
         let categories = new Array();
         let indices = new Array();

@@ -317,15 +317,19 @@ async function pushthrough(cik) {
 /**
  * Gets a skiplist for pushthrough
  * @param {String} cik 
- * @returns {Set<String>}
+ * @returns {Promise<Set<String>>}
  */
-function getFilingSkipSet(cik) {
-  if (!fs.existsSync(`./production/${cik}/skiplist.txt`)){
+async function getFilingSkipSet(cik) {
+  let dir = `./production/${cik}/`;
+  if (!fs.existsSync(dir + 'skiplist.txt')) {
+    // console.log(`${dir + 'skiplist.txt'} does not exist`);
+    // console.log(`returning new set`);
     return new Set();
   }
   let set = new Set();
-  let lines = getLines(`./production/${cik}/skiplist.txt`);
+  let lines = await getLines(`./production/${cik}/skiplist.txt`);
   for (let line of lines) {
+    // console.log(`Adding ${line} to set`);
     set.add(line);
   }
   return set;
@@ -351,7 +355,7 @@ function addFilingToSkipList(url, cik) {
  */
 async function pushthroughEdgarSearch(page, cik) {
 
-  let skipSet = getFilingSkipSet();
+  let skipSet = await getFilingSkipSet(cik);
 
   // Navigate the page to a URL. Wait until the page is fully loaded.
   await page.goto(`https://www.sec.gov/edgar/search/#/dateRange=custom&category=custom&entityName=${cik}&startdt=2004-01-01&enddt=2024-08-09&forms=10-Q`,
@@ -363,7 +367,7 @@ async function pushthroughEdgarSearch(page, cik) {
 
   // console.log(`Hits length: ${hits.length}`);
 
-  
+
 
   // We can't be going back and forth from the search page
   // So first we collect every link
@@ -391,7 +395,7 @@ async function pushthroughEdgarSearch(page, cik) {
       const jsonLink = await buttonHandle.getProperty('href');
       link = await jsonLink.jsonValue();
     }
-    
+
     if (!skipSet.has(link)) {
       links.push(link);
     } else {
