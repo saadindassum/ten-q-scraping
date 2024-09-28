@@ -533,6 +533,7 @@ export class ParsingUtility {
      * 
      * @param {ElementHandle} tdHandle 
      * @param {Page} page 
+     * @returns {Promise<Number>}
      */
     async getColspan(tdHandle, page) {
         let span = await page.evaluate(
@@ -546,6 +547,40 @@ export class ParsingUtility {
             span = parseInt(span);
         }
         return span;
+    }
+
+    /**
+     * Finds CSS width if it was assigned through style or width.
+     * Returns -1 if width was not assigned.
+     * @param {ElementHandle} tdHandle 
+     * @param {Page} page 
+     * @returns {Promise<Number>}
+     */
+    async getWidth(tdHandle, page) {
+        let width = await page.evaluate(
+            el => el.getAttribute('width'),
+            tdHandle,
+        );
+
+        if (width == null) {
+            let style = await page.evaluate(
+                el => el.getAttribute('style'),
+                tdHandle,
+            );
+            let attributes = style.split(';');
+            for (let i = 0; i < attributes.length; i++) {
+                if (attributes[i].includes('width')) {
+                    // This means we've found the width attribute.
+                    let wValue = (attributes[i].split(':'))[1];
+                    wValue = wValue.split('%').join('');
+                    return parseFloat(wValue);
+                }
+            }
+            // If we have reached the end of this array
+            // That means the width attribute has not been found.
+            return -1;
+        }
+        return parseFloat(width);
     }
 
     /**

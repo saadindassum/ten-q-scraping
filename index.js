@@ -399,7 +399,7 @@ async function pushthroughEdgarSearch(page, cik) {
     if (!skipSet.has(link)) {
       links.push(link);
     } else {
-      console.log(`%c Skipped ${cik}`, 'color: grey');
+      console.log(`%c Skipped ${link}`, 'color: grey');
       // We have to remove this file date
       fileDates.splice(-1)
     }
@@ -439,5 +439,5 @@ async function pushthroughEdgarSearch(page, cik) {
 }
 
 // main();
-// test('https://www.sec.gov/Archives/edgar/data/17313/000001731324000058/cswc-20240630.htm');
-pushthrough();
+test('https://www.sec.gov/Archives/edgar/data/17313/000001731317000039/cswc-20170930x10q.htm');
+// pushthrough();
