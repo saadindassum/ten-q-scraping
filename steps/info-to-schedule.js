@@ -118,9 +118,9 @@ export class InfoToSchedule {
                 }
             }
         }
-        if (categoryInfo.getCategories().length != 8) {
-            throw new Error('Unimplemented: Mismatching number of categories!');
-        }
+        // if (categoryInfo.getCategories().length != 8) {
+        //     throw new Error('Unimplemented: Mismatching number of categories!');
+        // }
 
         // console.log(`%c ${categoryInfo.getCategories()}`, 'color: yellow');
 
