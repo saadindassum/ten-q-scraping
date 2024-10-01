@@ -1,9 +1,10 @@
 import { ElementHandle, Page } from 'puppeteer';
 import { ScheduleInfo, ScheduleOfInvestments } from '../ten-q-objects.js';
 import { TitleFinder } from './title-finder.js';
+import { ParsingUtility } from '../parsing-utility.js';
 
 let titleFinder = new TitleFinder();
-
+let parsingUtility = new ParsingUtility
 export class ScheduleFinder {
     constructor() { }
 
@@ -18,6 +19,9 @@ export class ScheduleFinder {
         let containers = await this.findTypeTwo(page);
         if (containers == null || containers.length == 0) {
             containers = await this.findTypeOne(page);
+            if (containers == null || containers.length == 0) {
+                return await this.findTypeThree(page);
+            }
         } else {
             console.log('Found type 2');
         }
@@ -111,5 +115,69 @@ export class ScheduleFinder {
             return null;
         }
         return containers;
+    }
+
+    /**
+     * For tables with no containers.
+     * @param {Page} page
+     * @returns {Promise<ScheduleInfo[]>}
+     */
+    async findTypeThree(page) {
+        console.log('Parsing for Type 3');
+        let allHandles = await page.$$('body > document > type > sequence > filename > description > text > *');
+        console.log(allHandles);
+        let scheduleInfos = new Array();
+        // Now we basically just have to go through every tag, check the name, and process according to the tags we find.
+        // The pattern we're looking for is HR, title (spread accross multiple P's), table.
+        // If we hit a table, we use that as our container. If we hit an HR, we can clear our title.
+        let title = '';
+        let date;
+        for (let handle of allHandles) {
+            //First we determine what tag it is...
+            let tagName = await page.evaluate(
+                el => el.tagName,
+                handle
+            );
+            if (tagName === 'HR') {
+                // We clear the title
+                title = '';
+            } else if (tagName === 'P') {
+                let str = await page.evaluate(
+                    el => el.textContent,
+                    handle
+                );
+                title += str;
+                title += '\n';
+                // We also want to parse the string for a date
+                let potentialDate;
+                if (str.includes('as of')) {
+                    console.log(`str: ${str}`);
+                    potentialStr = parsingUtility.removeExtraSpaces((str.split('as of'))[1]);
+                    potentialDate = Date.parse(potentialStr);
+                } else {
+                    potentialDate = Date.parse(str);
+                }
+                if (potentialDate.toString() !== 'Invalid Date') {
+                    date = potentialDate;
+                }
+            } else if (tagName === 'TABLE') {
+                if (titleFinder.titleValid(title)) {
+                    //This means we've successfully found a schedule.
+                    console.log(`%cFOUND SCHEDULE!\n${title}`, 'color:green');
+                    if (date == null) {
+                        throw new Error('Date null in Type 3 schedule!');
+                    }
+                    let info = new ScheduleInfo(handle, title, tagName, date, 0);
+                    scheduleInfos.push(info);
+                }
+                // Handle table
+            }
+            // else if (tagName === 'BR' || tagName === 'TITLE') {
+            //     continue;
+            // } else {
+            //     throw new Error(`Unknown tag name: ${tagName}`);
+            // }
+        }
+        throw new Error('UNIMPLEMENTED TYPE 3!');
     }
 }
