@@ -17,7 +17,9 @@ export class ScheduleFinder {
         // We basically just go through every container case we know. From least to most compatible
         let containers = await this.findTypeTwo(page);
         if (containers == null || containers.length == 0) {
-            containers = await this.findTypeOne(page)
+            containers = await this.findTypeOne(page);
+        } else {
+            console.log('Found type 2');
         }
         
         if (containers == null || containers.length == 0) {

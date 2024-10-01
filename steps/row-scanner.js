@@ -12,164 +12,88 @@ export class RowScanner {
      * @param {ElementHandle} rowHandle 
      * @param {CategoryInfo} categoryInfo 
      * @param {Page} page 
-     * @returns {Promise<Map>}
+     * @returns {Promise<Map<String, any>>}
      */
     async scanRowForData(rowHandle, categoryInfo, page) {
         let tds = await rowHandle.$$('td');
-        if (tds.length == categoryInfo.tdLength) {
-            return await this.scanForMatchingCells(tds, categoryInfo, page);
-        }
-        return await this.scanForNonMatchingCells(tds, categoryInfo, page);
-    }
-
-    /**
-     * For rows where the number of TD's matches what was found
-     * in category info.
-     * @param {ElementHandle} rowHandle 
-     * @param {CategoryInfo} categoryInfo 
-     * @param {Page} page 
-     * @returns {Promise<Map>}
-     */
-    async scanForMatchingCells(tdHandles, categoryInfo, page) {
+        tds = await parsingUtility.removeDisplayNones(tds, page);
+        let colArr = await parsingUtility.rowAsColspan(tds, page);
+        // console.log(`%cCol length: ${categoryInfo.colTotal}`, 'color: pink');
         let map = new Map();
-        // This will help us see if the row stores a note and nothing else
-        // If it does, we want to return a single key/value.
-        let infoCount = 0;
+        let footnotes = new Array();
 
-        let firstText = '';
-        let indexOfFirst = -1;
+        // We will iterate through colspan indices
+        for (let i = 0; i < categoryInfo.colspans.length; i++) {
+            let colIndex = categoryInfo.colspanAt(i).index;
+            let span = categoryInfo.colspanAt(i).span;
+            // console.log(`Colindex: ${colIndex}`);
+            // Now that we know the index of the colspan and its length, we parse
+            // all non-footnote TD's in there.
 
-        // Since we have the indices of every category, we're going
-        // to iterate using those.
-        for (let i = 0; i < categoryInfo.getIndices().length; i++) {
-            let currentHandle = tdHandles[categoryInfo.indexAt(i)];
-            // let str = '\x1b[33mBLANK\x1b[39m';
-            let str = await parsingUtility.parseTd(currentHandle, page);
-            if (str.length > 0) {
-                // Info was found in the cell
-                // console.log(`Info found: ${str}`);
-                if (!firstText) {
-                    firstText = str;
-                    indexOfFirst = i;
-                }
-                infoCount++;
-            }
+            let str = await this.parseColspan(colArr, colIndex, span, page);
             // We format for output
             str = parsingUtility.prepareStringForOutput(str);
+            if (i == 0) {
+                // console.log(`%c${categoryInfo.categoryAt(0)}: ${str}`, 'color:yellow');
+            }
+            // console.log(`${categoryInfo.categoryAt(i)}: '${str}'`);
             map.set(
                 categoryInfo.categoryAt(i),
                 str
             );
-        }
 
-        // console.log(`Info count: ${infoCount}`);
-        if (infoCount < 2 && indexOfFirst == 0) {
-            // console.log('NOTE DETECTED');
-            map = new Map();
-            map.set('note', firstText);
+            // Deal with footnotes
+            let footnote = await this.parseSpanFootnotes(colArr, colIndex, span, page);
+            footnote = parsingUtility.replaceCommas(footnote, ';');
+            footnote = parsingUtility.prepareStringForOutput(footnote);
+            footnotes.push(footnote);
         }
-        // console.log(map);
+        map.set('footnotes', footnotes);
+
         return map;
     }
 
     /**
-     * For rows where the number of TD's matches what was found
-     * in category info.
-     * @param {ElementHandle} rowHandle 
-     * @param {CategoryInfo} categoryInfo 
+     * 
+     * @param {ElementHandle[]} colArr 
+     * @param {Number} cIndex 
+     * @param {Number} span aka colspan in the HTML
      * @param {Page} page 
-     * @returns {Promise<Map>}
+     * @returns {Promise<String>} data
      */
-    async scanForNonMatchingCells(tdHandles, categoryInfo, page) {
-        let map = new Map();
-        // This will help us see if the row stores a note and nothing else
-        // If it does, we want to return a single key/value.
-        let infoCount = 0;
-
-        let firstText = '';
-        let indexOfFirst = -1;
-
-        // Since we have the indices of every category, we're going
-        // to iterate using those.
-        for (let i = 0; i < categoryInfo.getIndices().length; i++) {
-            let currentHandle = tdHandles[categoryInfo.indexAt(i)];
-
-            if (currentHandle == null) {
-                map.set(
-                    categoryInfo.categoryAt(i),
-                    ''
-                );
-                break;
+    async parseColspan(colArr, cIndex, span, page) {
+        let str = '';
+        for (let i = cIndex; i < cIndex + span; i++) {
+            let td = colArr[i];
+            if (td != null) {
+                // console.log(`%cTd: ${td}`, 'color:yellow');
+                let bit = await parsingUtility.parseTd(td, page);
+                bit = parsingUtility.removeExtraSpaces(bit);
+                str += bit;
             }
-            
-            let str = await parsingUtility.parseTd(currentHandle, page);
-
-            // console.log(`%c ${categoryInfo.indexAt(i)}: ${str}`, 'color: orange;');
-            // Sometimes a $ is stored where the info should be, and the data is stored
-            // in the neighbor td
-            if (str === '$') {
-                // Every $ adds an extra td, so we're going to remove
-                // that td from our array, then go back.
-                // console.error('$ DETECTED');
-                tdHandles.splice(i, 1);
-                i--;
-                continue;
-            }
-            if (str.length == 0 && i > 1) {
-                // Patterns I'm accounting for here
-                // tend to pop up after the second category
-                // for this microvar
-                try {
-                    const prevHandle = tdHandles[categoryInfo.indexAt(i) - 1];
-                    const nextHandle = tdHandles[categoryInfo.indexAt(i) + 1];
-                    const prev = await parsingUtility.parseTd(prevHandle, page);
-                    const next = await parsingUtility.parseTd(nextHandle, page);
-                    if (prev === '') {
-                        if (next === '$' || next === ' ') {
-                            // Pattern: two blanks then dollar
-                            // Or three blanks in a row at a td where
-                            // data is supposed to be.
-                            // We're supposed to land in the middle one.
-                            // console.error('SPSP$ DETECTED');
-                            tdHandles.splice(i - 1, 2);
-                        } else {
-                            // console.error('BLBL DETECTED');
-                            // Pattern: two blanks in a row
-                            // where data is supposed to be.
-                            tdHandles.splice(i, 1);
-                        }
-                        i--;
-                        continue;
-                    }
-                } catch (e) {
-                    // console.error(e);
-                }
-            }
-            if (str) {
-                // Info was found in the cell
-                // console.log(`Info found: ${str}`);
-                if (!firstText) {
-                    firstText = str;
-                    indexOfFirst = i;
-                }
-                infoCount++;
-            }
-            // We have to get rid of all commas
-            str = parsingUtility.prepareStringForOutput(str);
-            // Info or not, we add str to the map.
-            map.set(
-                categoryInfo.categoryAt(i),
-                str
-            );
         }
-
-        // console.log(`Info count: ${infoCount}`);
-        if (infoCount < 2 && indexOfFirst == 0) {
-            // console.log('NOTE DETECTED');
-            map = new Map();
-            map.set('note', firstText);
-        }
-        return map;
+        return str;
     }
 
+    /**
+     * 
+     * @param {ElementHandle[]} colArr 
+     * @param {Number} cIndex 
+     * @param {Number} span aka colspan in the HTML
+     * @param {Page} page 
+     * @returns {Promise<String>} footnotes
+     */
+    async parseSpanFootnotes(colArr, cIndex, span, page) {
+        let str = '';
+        for (let i = cIndex; i < cIndex + span; i++) {
+            let td = colArr[i];
+            if (td != null) {
+                // console.log(`%cTd: ${td}`, 'color:yellow');
+                let bit = await parsingUtility.parseFootnotes(td, page);
+                bit = parsingUtility.removeExtraSpaces(bit);
+                str += bit;
+            }
+        }
+        return str;
+    }
 }

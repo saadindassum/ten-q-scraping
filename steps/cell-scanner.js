@@ -12,7 +12,7 @@ export class CellScanner {
      * 
      * @param {String} sheet 
      * @param {AsciiCategoryInfo} asciiInfo
-     * @returns {Map<String, String>[]} data with category string as key
+     * @returns {Map<String, any>[]} data with category string as key
      */
     barebones(sheet, asciiInfo) {
         let table = asciiUtility.getTable(sheet);

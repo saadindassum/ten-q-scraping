@@ -9,6 +9,8 @@ import fs from 'fs';
 import readline from 'readline';
 import TenQUtility from './10q.js';
 
+const tenQUtility = new TenQUtility();
+
 async function main() {
 
   // First we want the list of searches we'll be making
@@ -256,6 +258,10 @@ async function delay(time) {
   return new Promise(resolve => setTimeout(resolve, time));
 }
 
+/**
+ * 
+ * @returns {String[]}
+ */
 function getSkipList() {
   const testFolder = './output/';
   let fileNames = new Array()
@@ -267,6 +273,171 @@ function getSkipList() {
   return fileNames;
 }
 
+/**
+ * Takes a CIK, processes each filing as a document, and then merges them all into one document at the end.
+ * Throws an error when encountering an unknown case.
+ * 
+ * @param {String} cik 
+ */
+async function pushthrough(cik) {
 
-// test('https://www.sec.gov/Archives/edgar/data/17313/000001731317000039/cswc-20170930x10q.htm');
-main();
+  const browser = await puppeteer.launch(
+    {
+      headless: false,
+      args: [`--window-size=${1920},${1080}`],
+    }
+  );
+
+  const page = await browser.newPage();
+
+  const searches = await getLines('searches.txt');
+  let skipList = getSkipList();
+
+  for (var i = 0; i < searches.length; i++) {
+    let cik = searches[i];
+    //If we don't do this, we won't get any hits on EDGAR
+    while (cik.length < 10) {
+      cik = '0' + cik;
+    }
+    if (!skipList.includes(cik)) {
+      await pushthroughEdgarSearch(page, cik);
+    } else {
+      console.log(`Skipped ${cik}`);
+    }
+
+  }
+
+  // If we've reached this point, we've gone through all CIK's successfully.
+  // We merge all files into one, throw that onto one string, and then place it under
+  // one file in the output directory.
+  // Finally, we recursively delete the directory for this CIK.
+
+}
+
+/**
+ * Gets a skiplist for pushthrough
+ * @param {String} cik 
+ * @returns {Promise<Set<String>>}
+ */
+async function getFilingSkipSet(cik) {
+  let dir = `./production/${cik}/`;
+  if (!fs.existsSync(dir + 'skiplist.txt')) {
+    // console.log(`${dir + 'skiplist.txt'} does not exist`);
+    // console.log(`returning new set`);
+    return new Set();
+  }
+  let set = new Set();
+  let lines = await getLines(`./production/${cik}/skiplist.txt`);
+  for (let line of lines) {
+    // console.log(`Adding ${line} to set`);
+    set.add(line);
+  }
+  return set;
+}
+
+/**
+ * 
+ * @param {String} url 
+ * @param {String} cik
+ */
+function addFilingToSkipList(url, cik) {
+  let dir = `./production/${cik}/`;
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir);
+  }
+  fs.appendFileSync(dir + 'skiplist.txt', `${url}\n`);
+}
+
+/**
+ * 
+ * @param {Page} page 
+ * @param {string} search
+ */
+async function pushthroughEdgarSearch(page, cik) {
+
+  let skipSet = await getFilingSkipSet(cik);
+
+  // Navigate the page to a URL. Wait until the page is fully loaded.
+  await page.goto(`https://www.sec.gov/edgar/search/#/dateRange=custom&category=custom&entityName=${cik}&startdt=2004-01-01&enddt=2024-08-09&forms=10-Q`,
+    { waitUntil: 'networkidle0' }
+  );
+
+  //Here's the table containing all the forms. We'll get its element.
+  const hits = await page.$$('#hits > table > tbody > tr');
+
+  // console.log(`Hits length: ${hits.length}`);
+
+
+
+  // We can't be going back and forth from the search page
+  // So first we collect every link
+
+  let links = new Array();
+  let fileDates = new Array();
+
+  for (const hit of hits) {
+    //For the moment, we're going to try logging file dates
+    const fileDate = await page.evaluate(
+      (el) => el.querySelector('td.filed').textContent,
+      hit,
+    );
+    fileDates.push(fileDate);
+    //Cool, now we wanna click through each filetype box.
+    const hitHandle = await hit.$('td.filetype > a');
+    // console.log(hitHandle);
+    hitHandle.click();
+
+    await page.waitForSelector('#open-file', { timeout: 10000 });
+    let link;
+    while (!link) {
+      const buttonHandle = await page.$('#open-file');
+      // console.log('Button handle: ', buttonHandle);
+      const jsonLink = await buttonHandle.getProperty('href');
+      link = await jsonLink.jsonValue();
+    }
+
+    if (!skipSet.has(link)) {
+      links.push(link);
+    } else {
+      console.log(`%c Skipped ${link}`, 'color: grey');
+      // We have to remove this file date
+      fileDates.splice(-1)
+    }
+    // Now we have to close the preview page, so we find the button
+    // for that
+    await page.waitForSelector('#previewer > div > div > div.modal-header.border.border-0 > button', { timeout: 10000 });
+    const closeHandle = await page.$('#previewer > div > div > div.modal-header.border.border-0 > button');
+    try {
+      await closeHandle.click();
+    } catch (e) { }
+    // We add a delay because this seems to be the most intensive
+    // fetch, and where the SEC's most likely to block us.
+    await delay(250);
+  }
+
+  // And now we have a full list of 10Q links!
+  for (let i = 0; i < links.length; i++) {
+
+    console.log(`%cParsing filing page: ${links[i]}`, 'color:orange');
+    // console.log(`Link ${i}/${links.length}`);
+    const schedules = await tenQUtility.parse10Q(page, links[i]);
+    // console.log(`Schedules in: ${schedules}`);
+    const form = new TenQDoc(fileDates[i], schedules, links[i]);
+    addFilingToSkipList(links[i], cik);
+    // Now we make a document for this filing.
+    fs.writeFileSync(
+      `./production/${cik}/${fileDates[i]}.csv`,
+      form.toCsv(),
+    );
+    addFilingToSkipList(links[i], cik);
+    console.log(`%cParsed!`, 'color:green');
+  }
+
+  await page.close();
+  console.log(`%FINISHED CIK ${cik}`, 'color:green');
+
+}
+
+// main();
+test('https://www.sec.gov/Archives/edgar/data/313116/000031311609000006/uhy20081231encp10q2.htm');
+// pushthrough();

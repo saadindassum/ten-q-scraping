@@ -1,4 +1,4 @@
-import { ScheduleInfo, CategoryInfo } from "../ten-q-objects.js";
+import { ScheduleInfo, CategoryInfo, Colspan } from "../ten-q-objects.js";
 import { ParsingUtility } from "../parsing-utility.js";
 import { ElementHandle, Page } from "puppeteer";
 
@@ -41,23 +41,39 @@ export class CatInfoScanner {
      * @returns {Promise<CategoryInfo> | Promise<null>}
      */
     async scanRowForCategoryInfo(rowHandle, page) {
-        const tds = await rowHandle.$$('td');
+        let tds = await rowHandle.$$('td');
+        // God knows why they put display nones in here
+        // But they did. So we get rid of them.
+        tds = await parsingUtility.removeDisplayNones(tds, page);
+        let colTotal = 0;
+        let colspans = new Array();
         let categories = new Array();
         let indices = new Array();
         let tdIndex = 0;
         for await (const tdHandle of tds) {
+
+            // First we deal with span info
+            let span = await parsingUtility.getColspan(tdHandle, page);
+            let spanObj = new Colspan(colTotal, span);
+            // console.log(spanObj.span);
+            colTotal += span;
+            // console.log(`Total: ${colTotal}`);
+            // We only add the colspan to the array when running into a category.
+
+
             let str = await parsingUtility.parseTd(tdHandle, page);
             if (str.length != 0) {
                 indices.push(tdIndex);
                 str = parsingUtility.removeExtraSpaces(str);
                 categories.push(str);
+                colspans.push(spanObj);
             }
             tdIndex++;
         }
         if (categories.length == 0) {
             return null;
         }
-        return new CategoryInfo(indices, categories, tds.length);
+        return new CategoryInfo(indices, categories, tds.length, colTotal, colspans);
     }
 
     /**
@@ -67,8 +83,8 @@ export class CatInfoScanner {
      * @param {Page} page 
      * @returns {Promise<CategoryInfo> | Promise<null>}
      */
-    async scanRowForFromPreviousInfo(rowHandle, categoryInfo, page) {
-        const tds = await rowHandle.$$('td');
+    async scanRowFromPreviousInfo(rowHandle, categoryInfo, page) {
+        let tds = await rowHandle.$$('td');
         let categories = new Array();
         let indices = new Array();
         for await (const index of categoryInfo.getIndices()) {
@@ -81,6 +97,6 @@ export class CatInfoScanner {
         if (categories.length == 0) {
             return null;
         }
-        return new CategoryInfo(indices, categories, tds.length);
+        return new CategoryInfo(indices, categories, tds.length, categoryInfo.colTotal, categoryInfo.colspans);
     }
 }
