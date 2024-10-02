@@ -4,7 +4,7 @@ import { TitleFinder } from './title-finder.js';
 import { ParsingUtility } from '../parsing-utility.js';
 
 let titleFinder = new TitleFinder();
-let parsingUtility = new ParsingUtility
+let parsingUtility = new ParsingUtility();
 export class ScheduleFinder {
     constructor() { }
 
@@ -123,9 +123,9 @@ export class ScheduleFinder {
      * @returns {Promise<ScheduleInfo[]>}
      */
     async findTypeThree(page) {
-        console.log('Parsing for Type 3');
+        // console.log('Parsing for Type 3');
         let allHandles = await page.$$('body > document > type > sequence > filename > description > text > *');
-        console.log(allHandles);
+        // console.log(allHandles);
         let scheduleInfos = new Array();
         // Now we basically just have to go through every tag, check the name, and process according to the tags we find.
         // The pattern we're looking for is HR, title (spread accross multiple P's), table.
@@ -151,33 +151,28 @@ export class ScheduleFinder {
                 // We also want to parse the string for a date
                 let potentialDate;
                 if (str.includes('as of')) {
-                    console.log(`str: ${str}`);
-                    potentialStr = parsingUtility.removeExtraSpaces((str.split('as of'))[1]);
-                    potentialDate = Date.parse(potentialStr);
+                    let split = str.split('as of');
+                    let potentialStr = parsingUtility.removeExtraSpaces((split)[1]);
+                    potentialDate = new Date(Date.parse(potentialStr));
                 } else {
-                    potentialDate = Date.parse(str);
+                    potentialDate = new Date(Date.parse(str));
                 }
-                if (potentialDate.toString() !== 'Invalid Date') {
+                if (potentialDate.toString() !== 'Invalid Date' && potentialDate.toString() !== 'NaN') {
                     date = potentialDate;
                 }
             } else if (tagName === 'TABLE') {
                 if (titleFinder.titleValid(title)) {
                     //This means we've successfully found a schedule.
-                    console.log(`%cFOUND SCHEDULE!\n${title}`, 'color:green');
-                    if (date == null) {
+                    // console.log(`%cFOUND SCHEDULE!\n${title}`, 'color:green');
+                    if (date == null || date.toString() === 'NaN') {
                         throw new Error('Date null in Type 3 schedule!');
                     }
+                    // console.log(`%cDate: ${date.toString()}`, 'color:yellow');
                     let info = new ScheduleInfo(handle, title, tagName, date, 0);
                     scheduleInfos.push(info);
                 }
-                // Handle table
             }
-            // else if (tagName === 'BR' || tagName === 'TITLE') {
-            //     continue;
-            // } else {
-            //     throw new Error(`Unknown tag name: ${tagName}`);
-            // }
         }
-        throw new Error('UNIMPLEMENTED TYPE 3!');
+        return scheduleInfos;
     }
 }
