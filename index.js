@@ -423,7 +423,6 @@ async function pushthroughEdgarSearch(page, cik) {
     const schedules = await tenQUtility.parse10Q(page, links[i]);
     // console.log(`Schedules in: ${schedules}`);
     const form = new TenQDoc(fileDates[i], schedules, links[i]);
-    addFilingToSkipList(links[i], cik);
     // Now we make a document for this filing.
     fs.writeFileSync(
       `./production/${cik}/${fileDates[i]}.csv`,
@@ -434,10 +433,10 @@ async function pushthroughEdgarSearch(page, cik) {
   }
 
   await page.close();
-  console.log(`%FINISHED CIK ${cik}`, 'color:green');
+  console.log(`%cFINISHED CIK ${cik}`, 'color:green');
 
 }
 
 // main();
-test('https://www.sec.gov/Archives/edgar/data/313116/000031311609000006/uhy20081231encp10q2.htm');
-// pushthrough();
+// test('https://www.sec.gov/Archives/edgar/data/313116/000031311609000006/uhy20081231encp10q2.htm');
+pushthrough();
