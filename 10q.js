@@ -33,7 +33,10 @@ export default class TenQUtility {
         // First off, we want to know if it's the ultimate edge case - barebones.
         let preHandle = await page.$('body > pre');
         if (preHandle != null) {
-            return await this.parseBarebones(page, preHandle);
+            let scheds = await this.parseBarebones(page, preHandle);
+            if (scheds.length != null || scheds.length > 0) {
+                return scheds;
+            }
         }
 
         return await this.parseOrganized(page);
