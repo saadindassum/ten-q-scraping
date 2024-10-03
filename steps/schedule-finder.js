@@ -21,6 +21,8 @@ export class ScheduleFinder {
             containers = await this.findTypeOne(page);
             if (containers == null || containers.length == 0) {
                 return await this.findTypeThree(page);
+            } else {
+                console.log('Found type 1');
             }
         } else {
             console.log('Found type 2');
@@ -60,7 +62,7 @@ export class ScheduleFinder {
     }
 
     /**
-     * Scans for type one and its microvariations
+     * Scans for type one - a container for the title and the schedule
      * @param {Page} page 
      * @returns {Promise<ElementHandle[]>}
      */
@@ -123,7 +125,7 @@ export class ScheduleFinder {
      * @returns {Promise<ScheduleInfo[]>}
      */
     async findTypeThree(page) {
-        // console.log('Parsing for Type 3');
+        console.log('Parsing for Type 3');
         let allHandles = await page.$$('body > document > type > sequence > filename > description > text > *');
         // console.log(allHandles);
         let scheduleInfos = new Array();
