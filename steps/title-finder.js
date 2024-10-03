@@ -146,10 +146,35 @@ export class TitleFinder {
     async findInDiv(divHandle, page) {
         const pHandles = await divHandle.$$('div > p');
         let title = '';
-        let date;
 
         for (const pHandle of pHandles) {
             const str = await parsingUtility.parseP(pHandle, page);
+            let noSpace = '';
+            if (str) {
+                noSpace = parsingUtility.removeNonAlphanumeric(str);
+            }
+            if (noSpace.length > 0 && !str.includes('Table of Contents')) {
+                title += str;
+                title += '\n';
+                //Because the date always comes last.
+                this.checkForDate(str);
+            }
+        }
+        title = parsingUtility.replaceCommas(title, ';');
+        return title;
+    }
+
+    /**
+     * 
+     * @param {ElementHandle} divHandle 
+     * @param {Page} page 
+     * @returns {Promise<String>}
+     */
+    async findInDivArray(divHandles, page) {
+        let title = '';
+
+        for (const divHandle of divHandles) {
+            const str = await parsingUtility.parseP(divHandle, page);
             let noSpace = '';
             if (str) {
                 noSpace = parsingUtility.removeNonAlphanumeric(str);

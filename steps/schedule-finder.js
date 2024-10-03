@@ -23,6 +23,7 @@ export class ScheduleFinder {
                 return await this.findTypeThree(page);
             } else {
                 console.log('Found type 1');
+                console.log(containers);
             }
         } else {
             console.log('Found type 2');
@@ -97,6 +98,8 @@ export class ScheduleFinder {
         let containers = await page.$$('body > document > type > sequence > filename > description > text > div');
         if (containers == null || containers.length == 0) {
             containers = await page.$$('body > div');
+        } if (containers == null) {
+            containers == await page.$$('body > document > type > sequence > filename > description > text > div');
         }
         // We iterate through the containers to see if we can find one that has our p requirements
         for await (let container of containers) {
@@ -120,7 +123,8 @@ export class ScheduleFinder {
     }
 
     /**
-     * For tables with no containers.
+     * For documents where a single container holds all titles and tables.
+     * Practically no containers
      * @param {Page} page
      * @returns {Promise<ScheduleInfo[]>}
      */
@@ -140,7 +144,11 @@ export class ScheduleFinder {
                 el => el.tagName,
                 handle
             );
-            if (tagName === 'HR') {
+            let id = await page.evaluate(
+                el => el.getAttribute('id'),
+                handle,
+            )
+            if (tagName === 'HR' || id === 'DSPFPageBreakArea') {
                 // We clear the title
                 title = '';
             } else if (tagName === 'P') {
@@ -171,6 +179,28 @@ export class ScheduleFinder {
                     }
                     // console.log(`%cDate: ${date.toString()}`, 'color:yellow');
                     let info = new ScheduleInfo(handle, title, tagName, date, 0);
+                    scheduleInfos.push(info);
+                }
+            } else if (tagName === 'DIV') {
+                // By far the worst one, because this can contain anything in a few variations.
+                // First let's check if it's a title.
+                // So far, I've seen the element contain other divs, each which contains one div per each line of the title.
+                let divs = await handle.$$('div');
+                if (divs.length > 0) {
+                    // We've found subdivs. AKA a title.
+                    title = await titleFinder.findInDivArray(divs, page);
+                    date = titleFinder.date;
+                }
+            } else {
+                if (titleFinder.titleValid(title)) {
+                    let tableHandle = await handle.$('table');
+                    //This means we've successfully found a schedule.
+                    // console.log(`%cFOUND SCHEDULE!\n${title}`, 'color:green');
+                    if (date == null || date.toString() === 'NaN') {
+                        throw new Error('Date null in Type 3 schedule!');
+                    }
+                    // console.log(`%cDate: ${date.toString()}`, 'color:yellow');
+                    let info = new ScheduleInfo(tableHandle, title, 'TABLE', date, 0);
                     scheduleInfos.push(info);
                 }
             }
