@@ -136,7 +136,7 @@ export class TitleFinder {
         title = parsingUtility.replaceCommas(title, ';');
         return title;
     }
-    
+
     /**
      * 
      * @param {ElementHandle} divHandle 
@@ -172,9 +172,13 @@ export class TitleFinder {
      */
     async findInDivArray(divHandles, page) {
         let title = '';
-
+        console.log('finding in div array');
         for (const divHandle of divHandles) {
-            const str = await parsingUtility.parseP(divHandle, page);
+            let str = await page.evaluate(
+                el => el.textContent,
+                divHandle
+            );
+            console.log(`Parsed: '${str}'`);
             let noSpace = '';
             if (str) {
                 noSpace = parsingUtility.removeNonAlphanumeric(str);
