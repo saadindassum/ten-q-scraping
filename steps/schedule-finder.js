@@ -25,7 +25,7 @@ export class ScheduleFinder {
         } else {
             // console.log('Found type 2');
         }
-
+        
         if (containers == null || containers.length == 0) {
             throw new Error('Failed to find schedule containers');
         }
@@ -99,9 +99,6 @@ export class ScheduleFinder {
         } if (containers == null) {
             containers == await page.$$('body > document > type > sequence > filename > description > text > div');
         }
-        if (containers == null || containers.length == 0) {
-            containers = await page.$$('body > document > type > sequence > filename > text > div');
-        }
         // We iterate through the containers to see if we can find one that has our p requirements
         for await (let container of containers) {
             let pHandles = await container.$$('p');
@@ -158,7 +155,6 @@ export class ScheduleFinder {
                 handle,
             )
             if (tagName === 'HR' || id === 'DSPFPageBreakArea') {
-                console.log('PAGE BREAK, clearing title ', title);
                 // We clear the title
                 title = '';
             } else if (tagName === 'P') {
@@ -201,13 +197,10 @@ export class ScheduleFinder {
                 let divs = await handle.$$('div');
                 // console.log(`Divs length: ${divs.length}`);
                 if (divs.length > 0) {
-                    console.log(`%cFOUND SUBDIVS!`, 'color:green');
                     // We've found subdivs. AKA a title.
                     title = await titleFinder.findInDivArray(divs, page);
-                    console.log(`found title: ${title}`);
                     date = titleFinder.date;
                 } else {
-                    // console.log(`did not find subdivs`);
                     let tableHandles = await handle.$$('table');
                     // console.log(`%cTABLE HANDLES LENGTH: ${tableHandles.length}`, 'color:pink');
                     if (tableHandles.length > 0) {
@@ -235,7 +228,7 @@ export class ScheduleFinder {
                         }
                     }
                 }
-            }
+            } 
         }
         return scheduleInfos;
     }
