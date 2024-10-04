@@ -99,6 +99,9 @@ export class ScheduleFinder {
         } if (containers == null) {
             containers == await page.$$('body > document > type > sequence > filename > description > text > div');
         }
+        if (containers == null || containers.length == 0) {
+            containers = await page.$$('body > document > type > sequence > filename > text > div');
+        }
         // We iterate through the containers to see if we can find one that has our p requirements
         for await (let container of containers) {
             let pHandles = await container.$$('p');
