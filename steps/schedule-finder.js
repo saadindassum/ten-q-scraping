@@ -142,7 +142,6 @@ export class ScheduleFinder {
             console.error('returning blank');
             return [];
         }
-        // console.log(allHandles);
         let scheduleInfos = new Array();
         // Now we basically just have to go through every tag, check the name, and process according to the tags we find.
         // The pattern we're looking for is HR, title (spread accross multiple P's), table.
@@ -213,7 +212,7 @@ export class ScheduleFinder {
                         let tableHandle = tableHandles[0];
                         if (titleFinder.titleValid(title)) {
                             //This means we've successfully found a schedule.
-                            // console.log(`%cFOUND SCHEDULE!\n${title}`, 'color:green');
+                            console.log(`%cFOUND SCHEDULE!\n${title}`, 'color:green');
                             if (date == null || date.toString() === 'NaN') {
                                 throw new Error('Date null in Type 3 schedule!');
                             }
@@ -235,6 +234,9 @@ export class ScheduleFinder {
                     }
                 }
             } 
+        }
+        if (scheduleInfos.length > 0) {
+            console.log('Found type 3!');
         }
         return scheduleInfos;
     }
