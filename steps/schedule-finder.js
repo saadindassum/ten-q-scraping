@@ -23,13 +23,13 @@ export class ScheduleFinder {
         if (containers == null || containers.length == 0) {
             containers = await this.findTypeOne(page);
         } else {
-            // console.log('Found type 2');
+            console.log('Found type 2');
         }
         
         if (containers == null || containers.length == 0) {
             throw new Error('Failed to find schedule containers');
         }
-        // console.log('Found type 1');
+        console.log('Found type 1');
         // console.log(`Containers length: ${containers.length}`);
         // Here we store all the schedule infos we find.
         let infos = new Array();
@@ -66,7 +66,10 @@ export class ScheduleFinder {
      * @returns {Promise<ElementHandle[]>}
      */
     async findTypeOne(page) {
-        let containers = await page.$$('body > document > type > sequence > filename > description > text > div > table');
+        let containers = await page.$$('body > document > type > sequence > filename > description > text > div > div > div > table');
+        if (containers == null || containers.length == 0) {
+            containers = await page.$$('body > document > type > sequence > filename > description > text > div > table');
+        }
         if (containers == null || containers.length == 0) {
             containers = await page.$$('body > document > type > sequence > filename > description > text > div > div > table');
         }
