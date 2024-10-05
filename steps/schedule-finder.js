@@ -13,23 +13,25 @@ export class ScheduleFinder {
      * @returns {Promise<ScheduleInfo[]>}
      */
     async findSchedules(page) {
-        let schedules = await this.findTypeThree(page);
+        let containers = await this.findTypeOne(page);
         // We have to find the containers for the title, going from broadest to least broad
         // We basically just go through every container case we know. From least to most compatible
-        if (schedules.length > 0) {
-            return schedules;
-        }
-        let containers = await this.findTypeTwo(page);
-        if (containers == null || containers.length == 0) {
-            containers = await this.findTypeOne(page);
+        if (containers != null && containers.length > 0) {
+            console.log('Found type 1');
         } else {
-            console.log('Found type 2');
+            //Type 2 or 3
+            containers = await this.findTypeTwo(page);
+            if (containers != null && containers.length > 0) {
+                console.log('Found type 2');
+            } else {
+                let schedules = await this.findTypeThree(page);
+                if (schedules != null && schedules.length > 0) {
+                    return schedules;
+                } else {
+                    throw new Error('Failed to find schedule containers');
+                }
+            }
         }
-        
-        if (containers == null || containers.length == 0) {
-            throw new Error('Failed to find schedule containers');
-        }
-        console.log('Found type 1');
         // console.log(`Containers length: ${containers.length}`);
         // Here we store all the schedule infos we find.
         let infos = new Array();
