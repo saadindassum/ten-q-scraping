@@ -76,6 +76,7 @@ async function main() {
       cluster.queue(filingMap);
     }
     await cluster.idle();
+    console.log(`%cFINISHED CIK ${cik}`, 'color:green');
   }
   
   await cluster.close();
@@ -145,7 +146,6 @@ async function initCluster(cluster) {
       );
       addFilingToSkipList(link, cik);
       console.log(`%cParsed!`, 'color:green');
-      console.log(`%cFINISHED CIK ${cik}`, 'color:green');
     } catch (e) {
       console.error(e);
       console.error('Failed to parse filing ', link)
