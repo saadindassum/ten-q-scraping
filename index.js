@@ -64,6 +64,7 @@ async function main() {
     );
     const page = await browser.newPage();
     let linksMap = await findDocumentLinks(page, cik);
+    browser.close();
     let links = linksMap.get('links');
     let fileDates = linksMap.get('fileDates');
     for (let i = 0; i < links.length; i++) {
