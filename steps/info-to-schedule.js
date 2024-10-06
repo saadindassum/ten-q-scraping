@@ -127,7 +127,7 @@ export class InfoToSchedule {
         let data = await dataScanner.scanTable(rowHandles, categoryInfo, i, page);
         // console.log(`%c GOT TO BOTTOM`, 'color: orange;');
         // console.log(`%c ${date.toISOString()}`, 'color: orange;');
-        console.log(`%c Successfully parsed barebones page ${page.url()}`, 'color:green');
+        // console.log(`%c Successfully parsed barebones page ${page.url()}`, 'color:green');
         const sched = new ScheduleOfInvestments(title, date, categoryInfo.getCategories(), data);
         // console.log('\n\nDATA:\n', data[0].get('note'), '\n\n');
         // console.log(sched.toCsv());

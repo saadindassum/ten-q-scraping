@@ -33,7 +33,10 @@ export default class TenQUtility {
         // First off, we want to know if it's the ultimate edge case - barebones.
         let preHandle = await page.$('body > pre');
         if (preHandle != null) {
-            return await this.parseBarebones(page, preHandle);
+            let scheds = await this.parseBarebones(page, preHandle);
+            if (scheds.length != null || scheds.length > 0) {
+                return scheds;
+            }
         }
 
         return await this.parseOrganized(page);
@@ -86,7 +89,10 @@ export default class TenQUtility {
         // First we need info on all our schedules
         let infos = await scheduleFinder.findSchedules(page);
         let schedules = new Array();
-        // console.log(`%c ${infos.length} schedules found!`, 'color: yellow');
+        console.log(`%c ${infos.length} schedules found!`, 'color: yellow');
+        if (infos.length == 0) {
+            throw new Error('No schedules found!');
+        }
         for (let i = 0; i < infos.length; i++) {
             const scheduleInfo = infos[i];
             let sched = await infoToSchedule.convert(scheduleInfo, page);

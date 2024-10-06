@@ -23,8 +23,9 @@ export class TitleFinder {
         if (ttl.length == 0) return false;
         let lc = ttl.toLowerCase();
         let includesWord = lc.includes('schedule of investments') || lc.includes('schedule of portfolio investments');
-        let shortEnough = lc.length < 550;
-        return includesWord && shortEnough
+        let shortEnough = lc.length < 500;
+        let isNotes = lc.includes('notes to consolidated schedule of investments');
+        return includesWord && shortEnough && !isNotes;
     }
 
     /**
@@ -36,6 +37,7 @@ export class TitleFinder {
         if (date.toString() === 'Invalid Date') {
             return;
         }
+        // console.log(`%cFound date!`, 'color:orange');
         this.date = date;
     }
 
@@ -146,7 +148,6 @@ export class TitleFinder {
     async findInDiv(divHandle, page) {
         const pHandles = await divHandle.$$('div > p');
         let title = '';
-        let date;
 
         for (const pHandle of pHandles) {
             const str = await parsingUtility.parseP(pHandle, page);
@@ -159,6 +160,37 @@ export class TitleFinder {
                 title += '\n';
                 //Because the date always comes last.
                 this.checkForDate(str);
+            }
+        }
+        title = parsingUtility.replaceCommas(title, ';');
+        return title;
+    }
+
+    /**
+     * 
+     * @param {ElementHandle} divHandle 
+     * @param {Page} page 
+     * @returns {Promise<String>}
+     */
+    async findInDivArray(divHandles, page) {
+        this.date = null;
+        let title = '';
+
+        for (const divHandle of divHandles) {
+            const str = await parsingUtility.parseP(divHandle, page);
+            let noSpace = '';
+            if (str) {
+                noSpace = parsingUtility.removeNonAlphanumeric(str);
+            }
+            if (noSpace.length > 0 && !str.includes('Table of Contents')) {
+                title += str;
+                title += '\n';
+                //Because the date always comes last.
+                this.checkForDate(str);
+                if (this.date != null) {
+                    title = parsingUtility.replaceCommas(title, ';');
+                    return title;
+                }
             }
         }
         title = parsingUtility.replaceCommas(title, ';');
