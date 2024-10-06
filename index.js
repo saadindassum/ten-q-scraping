@@ -334,12 +334,12 @@ function addFilingToSkipList(url, cik) {
 }
 
 /**
- * 
+ * Finds all 10Q links in an edgar search, excludes the skipset.
  * @param {Page} page 
- * @param {string} search
+ * @param {String} cik 
+ * @returns {Promise<Map<String, String[]>>}
  */
-async function pushthroughEdgarSearch(page, cik) {
-
+async function findDocumentLinks(page, cik) {
   let skipSet = await getFilingSkipSet(cik);
 
   // Navigate the page to a URL. Wait until the page is fully loaded.
@@ -399,6 +399,22 @@ async function pushthroughEdgarSearch(page, cik) {
     // fetch, and where the SEC's most likely to block us.
     await delay(250);
   }
+  let map = new Map();
+  map.set('links', links);
+  map.set('fileDates', fileDates);
+  return map;
+}
+
+/**
+ * 
+ * @param {Page} page 
+ * @param {string} search
+ */
+async function pushthroughEdgarSearch(page, cik) {
+
+  const docLinksMap = await findDocumentLinks(page, cik);
+  const links = docLinksMap.get('links');
+  const fileDates = docLinksMap.get('fileDates');
 
   // And now we have a full list of 10Q links!
   for (let i = 0; i < links.length; i++) {
