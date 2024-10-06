@@ -144,8 +144,8 @@ export class ScheduleFinder {
         // console.log('Parsing for Type 3');
         let allHandles = await page.$$('body > document > type > sequence > filename > description > text > div > *');
         let allHandles2 = await page.$$('body > document > type > sequence > filename > description > text > *');
-        console.log(`allHandles length: ${allHandles.length}`);
-        console.log(`allHandle2 length: ${allHandles2.length}`);
+        // console.log(`allHandles length: ${allHandles.length}`);
+        // console.log(`allHandle2 length: ${allHandles2.length}`);
         let triedTwo = false;
         if (allHandles2.length > allHandles.length) {
             allHandles = allHandles2;
@@ -177,6 +177,7 @@ export class ScheduleFinder {
             )
             if (tagName === 'HR' || id === 'DSPFPageBreakArea' || id === 'DSPFPageHeader' || id === 'DSPFPageBreakArea') {
                 // We clear the title
+                console.log(`%cCLEARING:\n${title}`, 'color:pink');
                 title = '';
             } else if (tagName === 'P') {
                 let str = await page.evaluate(
@@ -198,6 +199,7 @@ export class ScheduleFinder {
                     date = potentialDate;
                 }
             } else if (tagName === 'TABLE') {
+                console.log(`%cFOUND TABLE`, 'color:orange');
                 if (titleFinder.titleValid(title)) {
                     //This means we've successfully found a schedule.
                     // console.log(`%cFOUND SCHEDULE IN TABLE TAG!\n${title}`, 'color:green');
@@ -229,7 +231,7 @@ export class ScheduleFinder {
                     // console.log(`%cTABLE HANDLES LENGTH: ${tableHandles.length}`, 'color:pink');
                     if (tableHandles.length > 0) {
                         let tableHandle = tableHandles[0];
-                        console.log(`${title}\nFOUND DIV TABLE!;`)
+                        console.log(`%cFOUND DIV TABLE`, 'color:orange');
                         if (titleFinder.titleValid(title)) {
                             //This means we've successfully found a schedule.
                             console.log(`%cFOUND SCHEDULE!\n${title}`, 'color:green');
