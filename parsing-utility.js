@@ -262,20 +262,6 @@ export class ParsingUtility {
         return str;
     }
 
-    /**
-         * Extracts text for TD handle of all known variations of Td
-         * @param {ElementHandle} tdHandle 
-         * @param {Page} page 
-         * @returns {Promise<String>}
-         */
-    async parseDiv(divHandle, page) {
-        let str = await page.evaluate(
-            el => el.textContent,
-            divHandle
-        );
-        return str;
-}
-
 /**
      * Extracts text for TD handle of all known variations of Td
      * @param {ElementHandle} tdHandle 
