@@ -13,16 +13,16 @@ export class ScheduleFinder {
      * @returns {Promise<ScheduleInfo[]>}
      */
     async findSchedules(page) {
-        let containers = await this.findTypeOne(page);
+        let containers = await this.findTypeTwo(page);
         // We have to find the containers for the title, going from broadest to least broad
         // We basically just go through every container case we know. From least to most compatible
         if (containers != null && containers.length > 0) {
-            console.log('Found type 1');
+            console.log('Found type 2');
         } else {
             //Type 2 or 3
-            containers = await this.findTypeTwo(page);
+            containers = await this.findTypeOne(page);
             if (containers != null && containers.length > 0) {
-                console.log('Found type 2');
+                console.log('Found type 1');
             } else {
                 let schedules = await this.findTypeThree(page);
                 if (schedules != null && schedules.length > 0) {
@@ -58,6 +58,12 @@ export class ScheduleFinder {
             } else {
                 throw new Error('Unimplemented case when finding schedules');
             }
+        }
+        console.log(`Type 1/2 infos: ${infos}`);
+        if (infos.length == 0) {
+            // Because sometimes a type 3 is confused for a type 1
+            console.log('No hits, checking for type 3 again')
+            return await this.findTypeThree(page);
         }
         return infos;
     }
@@ -137,9 +143,15 @@ export class ScheduleFinder {
     async findTypeThree(page) {
         // console.log('Parsing for Type 3');
         let allHandles = await page.$$('body > document > type > sequence > filename > description > text > div > *');
-        if (allHandles.length == 0) {
-            allHandles = await page.$$('body > document > type > sequence > filename > description > text > *');
+        let allHandles2 = await page.$$('body > document > type > sequence > filename > description > text > *');
+        if (allHandles2.length > allHandles.length) {
+            allHandles = allHandles2;
         }
+        // console.log(`Allhandles length: ${allHandles.length}`);
+        // console.log(`Allhandle2 length: ${allHandles2.length}`);
+        // if (allHandles.length == 0) {
+        //     allHandles = await page.$$('body > document > type > sequence > filename > description > text > *');
+        // }
         if (allHandles.length == 0) {
             console.error('returning blank');
             return [];
@@ -161,7 +173,7 @@ export class ScheduleFinder {
                 el => el.getAttribute('id'),
                 handle,
             )
-            if (tagName === 'HR' || id === 'DSPFPageBreakArea') {
+            if (tagName === 'HR' || id === 'DSPFPageBreakArea' || id === 'DSPFPageHeader') {
                 // We clear the title
                 title = '';
             } else if (tagName === 'P') {
@@ -186,7 +198,8 @@ export class ScheduleFinder {
             } else if (tagName === 'TABLE') {
                 if (titleFinder.titleValid(title)) {
                     //This means we've successfully found a schedule.
-                    // console.log(`%cFOUND SCHEDULE!\n${title}`, 'color:green');
+                    // console.log(`%cFOUND SCHEDULE IN TABLE TAG!\n${title}`, 'color:green');
+                    // console.log(`%c${date.toString()}`, 'color:orange');
                     if (date == null || date.toString() === 'NaN') {
                         throw new Error('Date null in Type 3 schedule!');
                     }
@@ -205,6 +218,8 @@ export class ScheduleFinder {
                 // console.log(`Divs length: ${divs.length}`);
                 if (divs.length > 0) {
                     // We've found subdivs. AKA a title.
+                    // Divs > 1 because it keeps parsing Table of Contents
+                    // console.log(`PARSING MULTIDIV WITH ID: ${id}`);
                     title = await titleFinder.findInDivArray(divs, page);
                     date = titleFinder.date;
                 } else {
@@ -214,7 +229,8 @@ export class ScheduleFinder {
                         let tableHandle = tableHandles[0];
                         if (titleFinder.titleValid(title)) {
                             //This means we've successfully found a schedule.
-                            console.log(`%cFOUND SCHEDULE!\n${title}`, 'color:green');
+                            // console.log(`%cFOUND SCHEDULE!\n${title}`, 'color:green');
+                            // console.log(`%c${date.toString()}`, 'color:orange');
                             if (date == null || date.toString() === 'NaN') {
                                 throw new Error('Date null in Type 3 schedule!');
                             }
@@ -240,6 +256,112 @@ export class ScheduleFinder {
         if (scheduleInfos.length > 0) {
             console.log('Found type 3!');
         }
+        //The following is from before we implemented the logic at the top with the allHandles length
+        //  else {
+        //     console.log(`%cREPEATING`, 'color:orange');
+        //     // We repeat the process but checking for the second variation only
+        //     allHandles = await page.$$('body > document > type > sequence > filename > description > text > *');
+        //     if (allHandles.length == 0) {
+        //         console.error('returning blank');
+        //         return [];
+        //     }
+        //     scheduleInfos = new Array();
+        //     // Now we basically just have to go through every tag, check the name, and process according to the tags we find.
+        //     // The pattern we're looking for is HR, title (spread accross multiple P's), table.
+        //     // If we hit a table, we use that as our container. If we hit an HR, we can clear our title.
+        //     let title = '';
+        //     let date;
+        //     // console.log('%cstarting loop', 'color:yellow');
+        //     for (let handle of allHandles) {
+        //         //First we determine what tag it is...
+        //         let tagName = await page.evaluate(
+        //             el => el.tagName,
+        //             handle
+        //         );
+        //         let id = await page.evaluate(
+        //             el => el.getAttribute('id'),
+        //             handle,
+        //         )
+        //         if (tagName === 'HR' || id === 'DSPFPageBreakArea' || id === 'DSPFPageHeader') {
+        //             // We clear the title
+        //             title = '';
+        //         } else if (tagName === 'P') {
+        //             let str = await page.evaluate(
+        //                 el => el.textContent,
+        //                 handle
+        //             );
+        //             title += str;
+        //             title += '\n';
+        //             // We also want to parse the string for a date
+        //             let potentialDate;
+        //             if (str.includes('as of')) {
+        //                 let split = str.split('as of');
+        //                 let potentialStr = parsingUtility.removeExtraSpaces((split)[1]);
+        //                 potentialDate = new Date(Date.parse(potentialStr));
+        //             } else {
+        //                 potentialDate = new Date(Date.parse(str));
+        //             }
+        //             if (potentialDate.toString() !== 'Invalid Date' && potentialDate.toString() !== 'NaN') {
+        //                 date = potentialDate;
+        //             }
+        //         } else if (tagName === 'TABLE') {
+        //             if (titleFinder.titleValid(title)) {
+        //                 //This means we've successfully found a schedule.
+        //                 // console.log(`%cFOUND SCHEDULE!`, 'color:green');
+        //                 if (date == null || date.toString() === 'NaN') {
+        //                     throw new Error('Date null in Type 3 schedule!');
+        //                 }
+        //                 // console.log(`%cDate: ${date.toString()}`, 'color:yellow');
+        //                 let info = new ScheduleInfo(handle, title, tagName, date, 0);
+        //                 scheduleInfos.push(info);
+        //                 // console.log(`%c${scheduleInfos}`, 'color:orange');
+        //             }
+        //         } else if (tagName === 'DIV') {
+        //             // By far the worst one, because this can contain anything in a few variations.
+        //             // First let's check if it's a title.
+        //             // So far, I've seen the element contain other divs, each which contains one div per each line of the title.
+        //             // There is also a variation in which the other divs aren't wrapped in a single div. They have to be treated kind of like p tags.
+        //             // We'll handle that after we handle a lack of inner divs.
+        //             // console.log(`parsing div`);
+        //             let divs = await handle.$$('div');
+        //             // console.log(`Divs length: ${divs.length}`);
+        //             if (divs.length > 0) {
+        //                 // We've found subdivs. AKA a title.
+        //                 // Divs > 1 because it keeps parsing Table of Contents
+        //                 // console.log(`PARSING MULTIDIV WITH ID: ${id}`);
+        //                 title = await titleFinder.findInDivArray(divs, page);
+        //                 date = titleFinder.date;
+        //             } else {
+        //                 let tableHandles = await handle.$$('table');
+        //                 // console.log(`%cTABLE HANDLES LENGTH: ${tableHandles.length}`, 'color:pink');
+        //                 if (tableHandles.length > 0) {
+        //                     let tableHandle = tableHandles[0];
+        //                     if (titleFinder.titleValid(title)) {
+        //                         //This means we've successfully found a schedule.
+        //                         console.log(`%cFOUND SCHEDULE!\n${title}`, 'color:green');
+        //                         if (date == null || date.toString() === 'NaN') {
+        //                             throw new Error('Date null in Type 3 schedule!');
+        //                         }
+        //                         // console.log(`%cDate: ${date.toString()}`, 'color:yellow');
+        //                         let info = new ScheduleInfo(tableHandle, title, 'TABLE', date, 0);
+        //                         scheduleInfos.push(info);
+        //                     }
+        //                 } else {
+        //                     // console.log(`%cLINE BY LINE CASE`, 'color:green');
+        //                     // This means we might have a line-by-line div title.
+        //                     let str = await parsingUtility.parseTd(handle, page);
+        //                     title += str;
+        //                     title += '\n';
+        //                     // We also want to parse the string for a date
+        //                     let potentialDate = new Date(Date.parse(str));
+        //                     if (potentialDate.toString() !== 'Invalid Date' && potentialDate.toString() !== 'NaN') {
+        //                         date = potentialDate;
+        //                     }
+        //                 }
+        //             }
+        //         } 
+        //     }
+        // }
         return scheduleInfos;
     }
 }
