@@ -47,21 +47,6 @@ async function main() {
     }
   }
 
-  // These have worked in the past
-  // cluster.queue('0000017313');
-
-  // These ones always get errors:
-  // cluster.queue('0001383414');
-  // cluster.queue('0001200934');
-  // cluster.queue('0001099941');
-
-  // Fix for maybe easy wins!
-  // cluster.queue('0001515173'); //toISO problem, suspecting in date
-  // cluster.queue('0001523526'); //toIso problem, suspecting in date
-  // cluster.queue('0001143513');
-  // cluster.quque('0001287750');
-  // cluster.queue('0001487428');
-
 
   await cluster.idle();
   await cluster.close();
@@ -424,8 +409,27 @@ async function pushthroughEdgarSearch(page, cik) {
     // console.log(`Schedules in: ${schedules}`);
     const form = new TenQDoc(fileDates[i], schedules, links[i]);
     // Now we make a document for this filing.
+    let dir = `./production/${cik}/`;
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir);
+    }
+    //For some reason, some filings share a date.
+    //So we check if it exists, and then give it a number if it shares a date.
+    let fileName = `${dir}${fileDates[i]}`
+    while (fs.existsSync(fileName + '.csv')) {
+      let split = fileName.split('_');
+      if (split.length != 2) {
+        // In this case we haven't added any numbers yet.
+        fileName = fileName + '_1';
+      } else {
+        // We add one to the number. Just like Pro Tools does.
+        let num = Number(split[1]);
+        num++;
+        fileName = split[0] + `_${num}`;
+      }
+    }
     fs.writeFileSync(
-      `./production/${cik}/${fileDates[i]}.csv`,
+      fileName + '.csv',
       form.toCsv(),
     );
     addFilingToSkipList(links[i], cik);
@@ -438,5 +442,5 @@ async function pushthroughEdgarSearch(page, cik) {
 }
 
 // main();
-test('https://www.sec.gov/Archives/edgar/data/17313/000114036113041116/form10q.htm');
-// pushthrough();
+// test('https://www.sec.gov/Archives/edgar/data/17313/000114036113041116/form10q.htm');
+pushthrough();

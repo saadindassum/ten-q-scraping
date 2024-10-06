@@ -177,7 +177,7 @@ export class ScheduleFinder {
             )
             if (tagName === 'HR' || id === 'DSPFPageBreakArea' || id === 'DSPFPageHeader' || id === 'DSPFPageBreakArea') {
                 // We clear the title
-                console.log(`%cCLEARING:\n${title}`, 'color:pink');
+                // console.log(`%cCLEARING:\n${title}`, 'color:pink');
                 title = '';
             } else if (tagName === 'P') {
                 let str = await page.evaluate(
