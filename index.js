@@ -5,7 +5,7 @@ import { TenQCollection } from './ten-q-objects.js';
 
 // Or import puppeteer from 'puppeteer-core';
 
-import fs from 'fs';
+import fs, { readFileSync, writeFileSync } from 'fs';
 import readline from 'readline';
 import TenQUtility from './10q.js';
 
@@ -418,6 +418,27 @@ async function pushthroughEdgarSearch(page, cik) {
 
 }
 
-main();
+function squish(cik) {
+  while (cik.length < 10) {
+    cik = '0' + cik;
+  }
+  let dir = `./production/${cik}`;
+  let output = '';
+  fs.readdirSync(dir).forEach(file => {
+    let str = `${file}`;
+    let split = str.split('.csv');
+    split = split[0].split('_');
+    let data = readFileSync(`${dir}/${file}`);
+    let date = new Date(Date.parse(split[0]));
+    if (!data.includes(`NO SCHEDULES FOUND`)) {
+      output += `${date}\n\n${data}\n\n\n\n`;
+    }
+  });
+  writeFileSync(`./output/${cik}.csv`, output);
+}
+
+// main();
 // test('https://www.sec.gov/Archives/edgar/data/17313/000114036113041116/form10q.htm');
 // pushthrough();
+
+squish('0000017313');
