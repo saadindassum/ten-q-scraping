@@ -59,7 +59,7 @@ export class ScheduleFinder {
                 throw new Error('Unimplemented case when finding schedules');
             }
         }
-        console.log(`Type 1/2 infos: ${infos}`);
+        // console.log(`Type 1/2 infos: ${infos}`);
         if (infos.length == 0) {
             // Because sometimes a type 3 is confused for a type 1
             console.log('No hits, checking for type 3 again')
@@ -177,7 +177,7 @@ export class ScheduleFinder {
             )
             if (tagName === 'HR' || id === 'DSPFPageBreakArea' || id === 'DSPFPageHeader' || id === 'DSPFPageBreakArea') {
                 // We clear the title
-                console.log(`%cCLEARING:\n${title}`, 'color:pink');
+                // console.log(`%cCLEARING:\n${title}`, 'color:pink');
                 title = '';
             } else if (tagName === 'P') {
                 let str = await page.evaluate(
