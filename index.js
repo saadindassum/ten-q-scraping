@@ -426,6 +426,9 @@ function squish(cik) {
   let output = '';
   fs.readdirSync(dir).forEach(file => {
     let str = `${file}`;
+    if (str.includes('skiplist')) {
+      return;
+    }
     let split = str.split('.csv');
     split = split[0].split('_');
     let data = readFileSync(`${dir}/${file}`);
@@ -437,8 +440,8 @@ function squish(cik) {
   writeFileSync(`./output/${cik}.csv`, output);
 }
 
-// main();
+main();
 // test('https://www.sec.gov/Archives/edgar/data/17313/000114036113041116/form10q.htm');
 // pushthrough();
 
-squish('0000017313');
+// squish('0000017313');
