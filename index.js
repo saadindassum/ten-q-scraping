@@ -113,13 +113,15 @@ async function initCluster(cluster) {
     // A filing map needs to contain keys 'link', 'fileDate', and 'CIK',
     // Both should be pointing to a SINGLE VALUE, not an array
     const link = filingMap.get('link');
+    await page.goto(link);
+    await page.waitForNetworkIdle({idleTime: 500});
+
     const fileDate = filingMap.get('fileDate');
     const cik = filingMap.get('cik');
     try {
       // And now we have a full list of 10Q links!
-      console.log(`%cParsing filing page: ${link}`, 'color:orange');
-      const schedules = await tenQUtility.parse10Q(page, link);
-      const form = new TenQDoc(fileDate, schedules, link);
+      console.log(`%cDownloading filing page: ${link}`, 'color:orange');
+      const html = await page.content();
       // Now we make a document for this filing.
       let dir = `./production/${cik}/`;
       if (!fs.existsSync(dir)) {
@@ -141,14 +143,14 @@ async function initCluster(cluster) {
         }
       }
       fs.writeFileSync(
-        fileName + '.csv',
-        form.toCsv(),
+        fileName + '.html',
+        html,
       );
-      addFilingToSkipList(link, cik);
-      console.log(`%cParsed!`, 'color:green');
+      // addFilingToSkipList(link, cik);
+      console.log(`%cDownloaded!`, 'color:green');
     } catch (e) {
       console.error(e);
-      console.error('Failed to parse filing ', link)
+      console.error('Failed to download filing ', link);
     }
   });
 }
@@ -169,30 +171,6 @@ async function getLines(filename) {
     lines.push(line);
   }
   return lines;
-}
-
-/**
- * Outputs a CSV for a single page.
- * @param {Page} page 
- * @param {String} url 
- */
-async function testPage(page, url) {
-  const tenQUtility = new TenQUtility();
-  const schedules = await tenQUtility.parse10Q(page, url);
-  const tqDoc = new TenQDoc(Date.now(), schedules, url);
-  const collection = new TenQCollection('TEST', [tqDoc]);
-  try {
-    let outputString = collection.toCsv();
-    fs.writeFile(`./output/test.csv`, outputString, err => {
-      if (err) {
-        // console.error(err);
-      } else {
-        // file written successfully
-      }
-    });
-  } catch (e) {
-    console.error(e);
-  }
 }
 
 /**
@@ -217,47 +195,6 @@ function getSkipList() {
     fileNames.push(split[0]);
   });
   return fileNames;
-}
-
-/**
- * Takes a CIK, processes each filing as a document, and then merges them all into one document at the end.
- * Throws an error when encountering an unknown case.
- * 
- * @param {String} cik 
- */
-async function pushthrough(cik) {
-
-  const browser = await puppeteer.launch(
-    {
-      headless: false,
-      args: [`--window-size=${1920},${1080}`],
-    }
-  );
-
-  const page = await browser.newPage();
-
-  const searches = await getLines('searches.txt');
-  let skipList = getSkipList();
-
-  for (var i = 0; i < searches.length; i++) {
-    let cik = searches[i];
-    //If we don't do this, we won't get any hits on EDGAR
-    while (cik.length < 10) {
-      cik = '0' + cik;
-    }
-    if (!skipList.includes(cik)) {
-      await pushthroughEdgarSearch(page, cik);
-    } else {
-      console.log(`Skipped ${cik}`);
-    }
-
-  }
-
-  // If we've reached this point, we've gone through all CIK's successfully.
-  // We merge all files into one, throw that onto one string, and then place it under
-  // one file in the output directory.
-  // Finally, we recursively delete the directory for this CIK.
-
 }
 
 /**
@@ -364,58 +301,6 @@ async function findDocumentLinks(page, cik) {
   map.set('links', links);
   map.set('fileDates', fileDates);
   return map;
-}
-
-/**
- * 
- * @param {Page} page 
- * @param {string} search
- */
-async function pushthroughEdgarSearch(page, cik) {
-
-  const docLinksMap = await findDocumentLinks(page, cik);
-  const links = docLinksMap.get('links');
-  const fileDates = docLinksMap.get('fileDates');
-
-  // And now we have a full list of 10Q links!
-  for (let i = 0; i < links.length; i++) {
-
-    console.log(`%cParsing filing page: ${links[i]}`, 'color:orange');
-    // console.log(`Link ${i}/${links.length}`);
-    const schedules = await tenQUtility.parse10Q(page, links[i]);
-    // console.log(`Schedules in: ${schedules}`);
-    const form = new TenQDoc(fileDates[i], schedules, links[i]);
-    // Now we make a document for this filing.
-    let dir = `./production/${cik}/`;
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir);
-    }
-    //For some reason, some filings share a date.
-    //So we check if it exists, and then give it a number if it shares a date.
-    let fileName = `${dir}${fileDates[i]}`
-    while (fs.existsSync(fileName + '.csv')) {
-      let split = fileName.split('_');
-      if (split.length != 2) {
-        // In this case we haven't added any numbers yet.
-        fileName = fileName + '_1';
-      } else {
-        // We add one to the number. Just like Pro Tools does.
-        let num = Number(split[1]);
-        num++;
-        fileName = split[0] + `_${num}`;
-      }
-    }
-    fs.writeFileSync(
-      fileName + '.csv',
-      form.toCsv(),
-    );
-    addFilingToSkipList(links[i], cik);
-    console.log(`%cParsed!`, 'color:green');
-  }
-
-  await page.close();
-  console.log(`%cFINISHED CIK ${cik}`, 'color:green');
-
 }
 
 function squish(cik) {
