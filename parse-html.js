@@ -7,7 +7,7 @@ const schedTitle = 'schedule of investments';
 /**
  * Takes an HTML file as a string, and finds a list of schedules of investment in it
  * @param {String} htmlString 
- * @returns {ScheduleOfInvestments[]}
+ * @returns {String[]}
  */
 function parseHTML(htmlString) {
     // The variable we'll be returning.
@@ -78,9 +78,9 @@ function parseHTML(htmlString) {
 
 /**
  * Takes a table as a string going from '<table>' to '</table>'
- * and parses it as a schedule of investments
+ * Assumes it's a schedule and returns the strings of all rows containing PIK's.
  * @param {String} tableString 
- * @returns {ScheduleOfInvestments}
+ * @returns {String}
  */
 function parseTable(tableString) {
     // TODO: implement
@@ -88,6 +88,13 @@ function parseTable(tableString) {
     // 2. Knowing lengths, parse information from tables.
     let bodyString = getTableBody(tableString);
     let rows = getRows(bodyString);
+    let out = '';
+    for (let row of rows) {
+        if (rowHasPIK(row)) {
+            out += row;
+            out += '\n';
+        }
+    }
 }
 
 /**
@@ -169,4 +176,20 @@ function getColspan(tagString) {
     }
     colspanString = colspanString.split(cStr).join('');
     return Number(colspanString);
+}
+
+/**
+ * 
+ * @param {String} rowString 
+ * @returns {Boolean}
+ */
+function rowHasPIK(rowString) {
+    const pik = 'PIK';
+    for (let i = 0; i < rowString.length; i++) {
+        if (rowString.substring(i, i + pik.length) == pik) {
+            console.log('%cPIK FOUND!', 'color:green');
+            return true;
+        }
+    }
+    return false;
 }
