@@ -9,7 +9,7 @@ const schedTitle = 'schedule of investments';
  * @param {String} htmlString 
  * @returns {String[]}
  */
-function parseHTML(htmlString) {
+export function parseHTML(htmlString) {
     // The variable we'll be returning.
     let schedules = new Array();
     // HP is so that we can tell nests. Hopefully we'll find none
