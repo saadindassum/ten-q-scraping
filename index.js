@@ -1,5 +1,6 @@
 import puppeteer, { Page } from 'puppeteer';
 import { Cluster } from 'puppeteer-cluster';
+import { parseHTML } from './parse-html.js';
 import { TenQDoc } from './ten-q-objects.js';
 import { TenQCollection } from './ten-q-objects.js';
 
@@ -87,20 +88,31 @@ async function main() {
 /**
  * 
  * @param {String} url 
+ * @param {String} cik
  */
-async function test(url) {
-  const browser = await puppeteer.launch(
-    {
+async function test(url, cik) {
+  let date = new Date(Date.now());
+  let filingMap = new Map();
+  filingMap.set('link', url);
+  filingMap.set('fileDate', date);
+  filingMap.set('cik', cik);
+
+  const cluster = await Cluster.launch({
+    concurrency: Cluster.CONCURRENCY_CONTEXT,
+    maxConcurrency: 4,
+    timeout: 12000000,
+    puppeteerOptions: {
       headless: false,
       args: [`--window-size=${1920},${1080}`],
-    }
-  );
+    },
+  });
 
-  const page = await browser.newPage();
+  await initCluster(cluster);
 
-  await testPage(page, url);
+  cluster.queue(filingMap);
 
-  await browser.close();
+  await cluster.idle();
+  await cluster.close();
   console.log(`%c FINISHED TEST!`, 'color: green');
 }
 
@@ -118,10 +130,12 @@ async function initCluster(cluster) {
 
     const fileDate = filingMap.get('fileDate');
     const cik = filingMap.get('cik');
+    let fileName = '';
+    let html = '';
     try {
       // And now we have a full list of 10Q links!
       console.log(`%cDownloading filing page: ${link}`, 'color:orange');
-      const html = await page.content();
+      html = await page.content();
       // Now we make a document for this filing.
       let dir = `./production/${cik}/`;
       if (!fs.existsSync(dir)) {
@@ -142,16 +156,23 @@ async function initCluster(cluster) {
           fileName = split[0] + `_${num}`;
         }
       }
-      fs.writeFileSync(
-        fileName + '.html',
-        html,
-      );
       // addFilingToSkipList(link, cik);
-      console.log(`%cDownloaded!`, 'color:green');
     } catch (e) {
       console.error(e);
       console.error('Failed to download filing ', link);
+      return;
     }
+    console.log('Finished downloading html code');
+    // Now we have the filename and the document. Let's parse the PIK rows
+    console.log(`HTML: '${html}'`);
+    await page.close();
+    let output = parseHTML(html);
+    fs.writeFileSync(
+      fileName + '.txt',
+      output,
+    );
+
+    console.log(`%cFinished parse!`, 'color:green');
   });
 }
 
@@ -325,8 +346,8 @@ function squish(cik) {
   writeFileSync(`./output/${cik}.csv`, output);
 }
 
-main();
-// test('https://www.sec.gov/Archives/edgar/data/17313/000114036113041116/form10q.htm');
+// main();
+test('https://www.sec.gov/Archives/edgar/data/1655050/000095017024021337/bcsf-20231231.htm', '1655050');
 // pushthrough();
 
 // squish('0000017313');
