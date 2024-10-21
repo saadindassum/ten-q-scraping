@@ -79,7 +79,7 @@ async function main() {
     await cluster.idle();
     console.log(`%cFINISHED CIK ${cik}`, 'color:green');
   }
-  
+
   await cluster.close();
 
   console.log('%c Completed program!', 'color:green;');
@@ -117,6 +117,40 @@ async function test(url, cik) {
 }
 
 /**
+ * Extracts PIK data from a local file
+ * @param path
+ * @returns Promise
+ */
+async function extractDataFromFile(path) {
+  let lines = await getLines(path);
+  let html = '';
+  for (let i = 0; i < lines.length; i++) {
+    html += lines[i];
+    html += '\n';
+  }
+  console.log('Got content from file!');
+  let stringArr = parseHTML(html);
+  console.log(`String array length: ${stringArr.length}`);
+  let output = '';
+  for (let i = 0; i < stringArr.length; i++) {
+    for (let j = 0; j < stringArr[i].length; j++) {
+      output += stringArr[i][j];
+      output += '\n';
+    }
+    output += '\n';
+  }
+  let splitPath = path.split('.');
+  let outputName = '.' + splitPath[splitPath.length - 2];
+  console.log(`Output name: '${outputName}'`);
+  outputName += '.csv';
+  console.log(`Output name after: '${outputName}'`);
+  fs.writeFileSync(
+    outputName,
+    output,
+  );
+}
+
+/**
  * Initializes our cluster to parse EDGAR and write to files.
  * @param {Cluster} cluster
  */
@@ -126,7 +160,7 @@ async function initCluster(cluster) {
     // Both should be pointing to a SINGLE VALUE, not an array
     const link = filingMap.get('link');
     await page.goto(link);
-    await page.waitForNetworkIdle({idleTime: 500});
+    await page.waitForNetworkIdle({ idleTime: 500 });
 
     const fileDate = filingMap.get('fileDate');
     const cik = filingMap.get('cik');
@@ -156,23 +190,17 @@ async function initCluster(cluster) {
           fileName = split[0] + `_${num}`;
         }
       }
+      fs.writeFileSync(
+        fileName + '.html',
+        html,
+      );
+      console.log(`%cFinished download!`, 'color:green');
       // addFilingToSkipList(link, cik);
     } catch (e) {
       console.error(e);
       console.error('Failed to download filing ', link);
       return;
     }
-    console.log('Finished downloading html code');
-    // Now we have the filename and the document. Let's parse the PIK rows
-    console.log(`HTML: '${html}'`);
-    await page.close();
-    let output = parseHTML(html);
-    fs.writeFileSync(
-      fileName + '.txt',
-      output,
-    );
-
-    console.log(`%cFinished parse!`, 'color:green');
   });
 }
 
@@ -347,7 +375,8 @@ function squish(cik) {
 }
 
 // main();
-test('https://www.sec.gov/Archives/edgar/data/1655050/000095017024021337/bcsf-20231231.htm', '1655050');
+// test('https://www.sec.gov/Archives/edgar/data/1655050/000095017024021337/bcsf-20231231.htm', '1655050');
+extractDataFromFile('./production/1655050/Mon Oct 21 2024 12:40:14 GMT-0500 (Ecuador Time).html');
 // pushthrough();
 
 // squish('0000017313');
