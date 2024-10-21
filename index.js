@@ -376,7 +376,7 @@ function squish(cik) {
 
 // main();
 // test('https://www.sec.gov/Archives/edgar/data/1655050/000095017024021337/bcsf-20231231.htm', '1655050');
-extractDataFromFile('./production/1655050/Mon Oct 21 2024 12:40:14 GMT-0500 (Ecuador Time).html');
+extractDataFromFile('./production/1655050/Mon Oct 21 2024 13:47:34 GMT-0500 (Ecuador Time).html');
 // pushthrough();
 
 // squish('0000017313');

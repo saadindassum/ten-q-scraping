@@ -56,7 +56,7 @@ export function parseHTML(htmlString) {
                 if (titleFound) {
                     let sched = parseTable(tableString); // String array
                     schedules.push(sched);
-                    titleFound = false;
+                    // titleFound = false;
                     titleHP = 0;
                 } else {
                     // console.error('Title found was set to false.');
@@ -289,6 +289,7 @@ function stripTags(htmlString) {
         }
     }
     output = parsingUtility.removeExtraSpaces(output);
+    output = parsingUtility.prepareStringForOutput(output);
     output = output.split('&nbsp;').join('');
     // console.log(`output: '${output}'`);
     return output;
